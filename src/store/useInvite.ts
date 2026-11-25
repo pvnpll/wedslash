@@ -34,6 +34,8 @@ export interface InviteState {
   setFunctions: (functions: FunctionEvent[]) => void;
   setStoryCarousel: (slides: StorySlide[]) => void;
   publishCurrent: (customSlug?: string) => string;
+  publishToCloud: (customSlug?: string) => Promise<{ slug: string; cloudSaved: boolean }>;
+  fetchPublishedFromCloud: (slug: string) => Promise<InvitationConfig | null>;
   hydrateFromStorage: () => void;
   getInviteBySlug: (slug: string) => InvitationConfig;
 }
@@ -65,6 +67,15 @@ function safeReadDraft(): InvitationConfig | null {
   } catch {
     return null;
   }
+}
+
+function normalizeSlug(raw: string, fallback: string): string {
+  return (
+    raw
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/^-|-$/g, "") || fallback
+  );
 }
 
 export const useInvite = create<InviteState>((set, get) => ({
@@ -107,11 +118,10 @@ export const useInvite = create<InviteState>((set, get) => ({
 
   setSlug: (slug) =>
     set((st) => {
-      const clean = slug
-        .toLowerCase()
-        .replace(/[^a-z0-9-]+/g, "-")
-        .replace(/^-|-$/g, "");
-      const next = { ...st.config, slug: clean || st.config.templateId };
+      const next = {
+        ...st.config,
+        slug: normalizeSlug(slug, st.config.templateId),
+      };
       safeWriteDraft(next);
       return { config: next };
     }),
@@ -184,12 +194,10 @@ export const useInvite = create<InviteState>((set, get) => ({
 
   publishCurrent: (customSlug) => {
     const st = get();
-    const rawSlug = customSlug || st.config.slug || st.config.templateId;
-    const slug =
-      rawSlug
-        .toLowerCase()
-        .replace(/[^a-z0-9-]+/g, "-")
-        .replace(/^-|-$/g, "") || st.config.templateId;
+    const slug = normalizeSlug(
+      customSlug || st.config.slug || st.config.templateId,
+      st.config.templateId
+    );
     const published: InvitationConfig = { ...st.config, slug };
     const map = { ...safeReadMap(), ...st.publishedSlugs, [slug]: published };
     if (typeof window !== "undefined") {
@@ -202,6 +210,45 @@ export const useInvite = create<InviteState>((set, get) => ({
     safeWriteDraft(published);
     set({ config: published, publishedSlugs: map });
     return slug;
+  },
+
+  publishToCloud: async (customSlug) => {
+    const slug = get().publishCurrent(customSlug);
+    const published = get().config;
+    try {
+      const res = await fetch("/api/invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, config: published }),
+      });
+      return { slug, cloudSaved: res.ok };
+    } catch {
+      return { slug, cloudSaved: false };
+    }
+  },
+
+  fetchPublishedFromCloud: async (slug) => {
+    try {
+      const res = await fetch(`/api/invites/${encodeURIComponent(slug)}`);
+      if (!res.ok) return null;
+      const json = (await res.json()) as {
+        invitation?: { config?: InvitationConfig };
+      };
+      const remoteCfg = json.invitation?.config;
+      if (!remoteCfg) return null;
+      const nextMap = { ...safeReadMap(), ...get().publishedSlugs, [slug]: remoteCfg };
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(PUBLISHED_STORAGE_KEY, JSON.stringify(nextMap));
+        } catch {
+          /* ignore */
+        }
+      }
+      set({ publishedSlugs: nextMap });
+      return remoteCfg;
+    } catch {
+      return null;
+    }
   },
 
   hydrateFromStorage: () => {

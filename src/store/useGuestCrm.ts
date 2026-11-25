@@ -90,7 +90,7 @@ export const SEED_GUESTS: GuestRsvp[] = [
   },
 ];
 
-function loadGuests(): GuestRsvp[] {
+function loadLocalGuests(): GuestRsvp[] {
   if (typeof window === "undefined") return SEED_GUESTS;
   try {
     const raw = window.localStorage.getItem(CRM_STORAGE_KEY);
@@ -102,7 +102,7 @@ function loadGuests(): GuestRsvp[] {
   }
 }
 
-function saveGuests(guests: GuestRsvp[]) {
+function saveLocalGuests(guests: GuestRsvp[]) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(CRM_STORAGE_KEY, JSON.stringify(guests));
@@ -114,28 +114,47 @@ function saveGuests(guests: GuestRsvp[]) {
 interface GuestCrmState {
   guests: GuestRsvp[];
   hydrated: boolean;
-  hydrate: () => void;
-  addGuest: (name: string, group: string, inviteSlug?: string) => void;
+  cloudSynced: boolean;
+  hydrate: (slug?: string) => Promise<void>;
+  addGuest: (name: string, group: string, inviteSlug?: string) => Promise<void>;
   upsertRsvp: (payload: Omit<GuestRsvp, "id" | "updatedAt">) => GuestRsvp;
-  updateStatus: (id: string, status: GuestRsvp["status"]) => void;
-  removeGuest: (id: string) => void;
+  updateStatus: (id: string, status: GuestRsvp["status"]) => Promise<void>;
+  removeGuest: (id: string) => Promise<void>;
   resetDemo: () => void;
 }
 
 export const useGuestCrm = create<GuestCrmState>((set, get) => ({
   guests: SEED_GUESTS,
   hydrated: false,
+  cloudSynced: false,
 
-  hydrate: () => {
-    const guests = loadGuests();
-    set({ guests, hydrated: true });
+  hydrate: async (slug) => {
+    const local = loadLocalGuests();
+    set({ guests: local, hydrated: true });
+    try {
+      const qs = slug ? `?slug=${encodeURIComponent(slug)}` : "";
+      const res = await fetch(`/api/rsvps${qs}`);
+      if (!res.ok) return;
+      const json = (await res.json()) as { rsvps?: GuestRsvp[] };
+      if (Array.isArray(json.rsvps)) {
+        if (json.rsvps.length > 0) {
+          saveLocalGuests(json.rsvps);
+          set({ guests: json.rsvps, cloudSynced: true });
+        } else {
+          set({ cloudSynced: true });
+        }
+      }
+    } catch {
+      /* retain local cache offline */
+    }
   },
 
-  addGuest: (name, group, inviteSlug = "wine-velvet-book") => {
+  addGuest: async (name, group, inviteSlug = "wine-velvet-book") => {
     const clean = name.trim();
     if (!clean) return;
-    const nextGuest: GuestRsvp = {
-      id: `g-${Date.now()}`,
+    const tempId = `g-${Date.now()}`;
+    const optimistic: GuestRsvp = {
+      id: tempId,
       inviteSlug,
       name: clean,
       group,
@@ -148,55 +167,115 @@ export const useGuestCrm = create<GuestCrmState>((set, get) => ({
       note: "",
       updatedAt: new Date().toISOString(),
     };
-    const next = [...get().guests, nextGuest];
-    saveGuests(next);
-    set({ guests: next });
+    const nextLocal = [optimistic, ...get().guests];
+    saveLocalGuests(nextLocal);
+    set({ guests: nextLocal });
+
+    try {
+      const res = await fetch("/api/rsvps", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(optimistic),
+      });
+      if (res.ok) {
+        const json = (await res.json()) as { rsvp?: GuestRsvp };
+        if (json.rsvp) {
+          const updated = get().guests.map((g) => (g.id === tempId ? json.rsvp! : g));
+          saveLocalGuests(updated);
+          set({ guests: updated, cloudSynced: true });
+        }
+      }
+    } catch {
+      /* optimistic local cache stays intact */
+    }
   },
 
   upsertRsvp: (payload) => {
-    const current = get().hydrated ? get().guests : loadGuests();
+    const current = get().hydrated ? get().guests : loadLocalGuests();
     const norm = payload.name.trim().toLowerCase();
     const existingIdx = current.findIndex(
       (g) => g.name.trim().toLowerCase() === norm
     );
+    const tempId = existingIdx >= 0 ? current[existingIdx].id : `g-${Date.now()}`;
     const entry: GuestRsvp = {
       ...payload,
-      id: existingIdx >= 0 ? current[existingIdx].id : `g-${Date.now()}`,
-      group: existingIdx >= 0 ? current[existingIdx].group : payload.group || "Guest RSVP",
+      id: tempId,
+      group: existingIdx >= 0 ? current[existingIdx].group : payload.group || "Online RSVP",
       updatedAt: new Date().toISOString(),
     };
     const next =
       existingIdx >= 0
         ? current.map((g, i) => (i === existingIdx ? entry : g))
         : [entry, ...current];
-    saveGuests(next);
+    saveLocalGuests(next);
     set({ guests: next, hydrated: true });
+
+    void fetch("/api/rsvps", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(entry),
+    })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const json = (await res.json()) as { rsvp?: GuestRsvp };
+        if (json.rsvp) {
+          const synced = get().guests.map((g) => (g.id === tempId ? json.rsvp! : g));
+          saveLocalGuests(synced);
+          set({ guests: synced, cloudSynced: true });
+        }
+      })
+      .catch(() => {});
+
     return entry;
   },
 
-  updateStatus: (id, status) => {
+  updateStatus: async (id, status) => {
+    const target = get().guests.find((g) => g.id === id);
+    const nextCount = status === "no" ? 0 : Math.max(1, target?.count ?? 1);
     const next = get().guests.map((g) =>
       g.id === id
         ? {
             ...g,
             status,
-            count: status === "no" ? 0 : Math.max(1, g.count),
+            count: nextCount,
             updatedAt: new Date().toISOString(),
           }
         : g
     );
-    saveGuests(next);
+    saveLocalGuests(next);
     set({ guests: next });
+
+    if (/^\d+$/.test(id)) {
+      try {
+        await fetch("/api/rsvps", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, status, count: nextCount }),
+        });
+      } catch {
+        /* ignore offline */
+      }
+    }
   },
 
-  removeGuest: (id) => {
+  removeGuest: async (id) => {
     const next = get().guests.filter((g) => g.id !== id);
-    saveGuests(next);
+    saveLocalGuests(next);
     set({ guests: next });
+
+    if (/^\d+$/.test(id)) {
+      try {
+        await fetch(`/api/rsvps?id=${encodeURIComponent(id)}`, {
+          method: "DELETE",
+        });
+      } catch {
+        /* ignore offline */
+      }
+    }
   },
 
   resetDemo: () => {
-    saveGuests(SEED_GUESTS);
+    saveLocalGuests(SEED_GUESTS);
     set({ guests: SEED_GUESTS });
   },
 }));

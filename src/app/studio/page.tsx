@@ -108,6 +108,8 @@ function StudioInner() {
   const [copied, setCopied] = useState(false);
   const [publishedOpen, setPublishedOpen] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [cloudSaved, setCloudSaved] = useState<boolean | null>(null);
   const [exporting, setExporting] = useState(false);
   const origin = useClientOrigin();
   const stageScrollRef = useRef<HTMLDivElement>(null);
@@ -144,10 +146,16 @@ function StudioInner() {
     }
   };
 
-  const handlePublish = () => {
-    const slug = s.publishCurrent(cfg.slug);
-    setPublishedSlug(slug);
-    setPublishedOpen(true);
+  const handlePublish = async () => {
+    setPublishing(true);
+    try {
+      const result = await s.publishToCloud(cfg.slug);
+      setPublishedSlug(result.slug);
+      setCloudSaved(result.cloudSaved);
+      setPublishedOpen(true);
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const handleDownloadZip = async () => {
@@ -895,10 +903,12 @@ function StudioInner() {
 
                   <button
                     type="button"
+                    disabled={publishing}
                     onClick={handlePublish}
-                    className="font-ui flex w-full items-center justify-center gap-2 rounded-2xl bg-[#6E1F2F] py-3 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-[#161412]"
+                    className="font-ui flex w-full items-center justify-center gap-2 rounded-2xl bg-[#6E1F2F] py-3 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-[#161412] disabled:opacity-50"
                   >
-                    <Rocket size={15} /> Publish Live Invite + QR
+                    <Rocket size={15} />{" "}
+                    {publishing ? "Publishing…" : "Publish Live Invite + QR"}
                   </button>
 
                   <button
@@ -949,10 +959,11 @@ function StudioInner() {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              disabled={publishing}
               onClick={handlePublish}
-              className="hidden rounded-full bg-[#6E1F2F] px-3.5 py-1.5 font-ui text-[11px] font-bold uppercase tracking-wider text-white sm:inline-flex items-center gap-1"
+              className="hidden rounded-full bg-[#6E1F2F] px-3.5 py-1.5 font-ui text-[11px] font-bold uppercase tracking-wider text-white disabled:opacity-50 sm:inline-flex items-center gap-1"
             >
-              <QrCode size={12} /> Publish
+              <QrCode size={12} /> {publishing ? "Publishing…" : "Publish"}
             </button>
             <div className="flex gap-1 rounded-full border hairline bg-white p-1">
               <button
@@ -1003,7 +1014,11 @@ function StudioInner() {
         open={publishedOpen}
         onClose={() => setPublishedOpen(false)}
         title="Your Invite is Live!"
-        subtitle="Share this personalized link or scan the QR code on any mobile device."
+        subtitle={
+          cloudSaved
+            ? "Saved to Wedslash Cloud. Share this personalized link or scan the QR code on any mobile device."
+            : "Saved in your browser storage. Configure Supabase env vars to share across devices."
+        }
       >
         <div className="text-center">
           <div className="mx-auto inline-block rounded-2xl border hairline bg-white p-4 shadow-sm">

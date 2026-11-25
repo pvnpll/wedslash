@@ -10,11 +10,17 @@ export default function InviteClient() {
   const sp = useSearchParams();
   const slug =
     typeof params.slug === "string" ? params.slug : params.slug?.[0] ?? "";
-  const { hydrateFromStorage, getInviteBySlug } = useInvite();
+  const { hydrateFromStorage, fetchPublishedFromCloud, getInviteBySlug } =
+    useInvite();
 
   useEffect(() => {
     hydrateFromStorage();
   }, [hydrateFromStorage]);
+
+  useEffect(() => {
+    if (!slug) return;
+    void fetchPublishedFromCloud(slug);
+  }, [slug, fetchPublishedFromCloud]);
 
   const customConfig = getInviteBySlug(slug);
   const template =
