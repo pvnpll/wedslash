@@ -214,7 +214,7 @@ export const useInvite = create<InviteState>((set, get) => ({
   },
 
   getInviteBySlug: (slug) => {
-    const map = { ...safeReadMap(), ...get().publishedSlugs };
+    const map = get().publishedSlugs;
     if (map[slug]) return map[slug];
     return getPresetConfig(slug);
   },

@@ -23,13 +23,13 @@ export default function Navbar() {
             <span className="font-ui block text-[10px] uppercase tracking-[0.22em] text-[#6E655F]">Interactive Invites</span>
           </span>
         </Link>
-        <nav className="hidden items-center gap-7 md:flex">
+        <nav className="hidden items-center gap-4 lg:gap-7 md:flex">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} className="font-ui text-[13px] font-medium uppercase tracking-[0.14em] text-[#161412]/70 hover:text-[#6E1F2F]">
+            <Link key={l.href} href={l.href} className="whitespace-nowrap font-ui text-[12px] lg:text-[13px] font-medium uppercase tracking-[0.12em] text-[#161412]/70 hover:text-[#6E1F2F]">
               {l.label}
             </Link>
           ))}
-          <Link href="/studio" className="font-ui inline-flex items-center gap-1.5 rounded-full bg-[#161412] px-5 py-2.5 text-[13px] font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-[#6E1F2F]">
+          <Link href="/studio" className="font-ui inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#161412] px-4 py-2.5 text-[12px] lg:px-5 lg:text-[13px] font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-[#6E1F2F]">
             <Sparkles size={14} /> Create Invite
           </Link>
         </nav>
