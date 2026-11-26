@@ -1,6 +1,6 @@
 "use client";
-import { motion, useReducedMotion } from "framer-motion";
-import { useState } from "react";
+import { motion, useMotionValue, useReducedMotion } from "framer-motion";
+import { memo, useState } from "react";
 import { Plane, RotateCw } from "lucide-react";
 import Countdown from "../Countdown";
 
@@ -30,7 +30,7 @@ function formatDateBadge(targetDate?: string): string {
   return `${dd} · ${mm} · ${yy}`;
 }
 
-export default function BoardingPass({
+function BoardingPassComponent({
   guestName,
   groom,
   bride,
@@ -47,11 +47,19 @@ export default function BoardingPass({
 }: BoardingPassProps) {
   const prefersReduced = useReducedMotion() ?? false;
   const [flipped, setFlipped] = useState(false);
+  const runwayX = useMotionValue(0);
 
   const toggleFlip = () => {
     const next = !flipped;
     setFlipped(next);
     if (next) onOpen?.();
+  };
+
+  const triggerTakeoff = () => {
+    if (!flipped) {
+      setFlipped(true);
+      onOpen?.();
+    }
   };
 
   const resolvedDateText = dateText || formatDateBadge(targetDate);
@@ -104,14 +112,34 @@ export default function BoardingPass({
             </div>
             <div className="flex flex-col items-center justify-center">
               <div
-                className="h-px w-full"
-                style={{
-                  backgroundImage: "linear-gradient(90deg, rgba(255,255,255,0.4) 50%, transparent 50%)",
-                  backgroundSize: "8px 1px",
-                }}
-              />
-              <Plane size={16} className="my-1.5 rotate-90" style={{ color: gold }} />
-              <p className="font-ui text-[10px] uppercase tracking-widest text-white/80">Direct</p>
+                className="relative flex h-8 w-full items-center"
+                title="Slide plane right for takeoff & passport"
+              >
+                <div
+                  className="h-px w-full"
+                  style={{
+                    backgroundImage: "linear-gradient(90deg, rgba(255,255,255,0.45) 50%, transparent 50%)",
+                    backgroundSize: "8px 1px",
+                  }}
+                />
+                <motion.button
+                  type="button"
+                  drag={prefersReduced || flipped ? false : "x"}
+                  dragConstraints={{ left: -24, right: 34 }}
+                  dragSnapToOrigin
+                  dragElastic={0.18}
+                  style={{ x: runwayX, touchAction: "none" }}
+                  onDragEnd={(_, info) => {
+                    if (info.offset.x > 18) triggerTakeoff();
+                  }}
+                  onClick={triggerTakeoff}
+                  aria-label={`Slide jet from ${departureCode} to ${arrivalCode} to open passport`}
+                  className="absolute left-1/2 -translate-x-1/2 rounded-full bg-white/10 p-1.5 transition hover:bg-white/20"
+                >
+                  <Plane size={15} className="rotate-90" style={{ color: gold }} />
+                </motion.button>
+              </div>
+              <p className="font-ui text-[9px] uppercase tracking-widest text-white/75">Slide Jet →</p>
             </div>
             <div>
               <p className="font-display text-3xl font-bold uppercase">{arrivalCode}</p>
@@ -244,3 +272,6 @@ export default function BoardingPass({
     </div>
   );
 }
+
+const BoardingPass = memo(BoardingPassComponent);
+export default BoardingPass;

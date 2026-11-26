@@ -22,6 +22,11 @@ export default function TemplatesPage() {
     const matchMech =
       mech === "All" ||
       (mech === "Velvet Book" && combinedMech.includes("book")) ||
+      (mech === "Heartbeat Hold" && combinedMech.includes("heartbeat")) ||
+      (mech === "Connect Stars" && combinedMech.includes("stars")) ||
+      (mech === "Foil Tear" && combinedMech.includes("tear")) ||
+      (mech === "Mist Glass" && combinedMech.includes("mist")) ||
+      (mech === "Mandala Dial" && combinedMech.includes("dial")) ||
       (mech === "Ring Box" && combinedMech.includes("ring")) ||
       (mech === "Diya Lamp" && (combinedMech.includes("diya") || combinedMech.includes("lamp"))) ||
       (mech === "Tassel Scroll" && combinedMech.includes("tassel")) ||
@@ -80,7 +85,7 @@ export default function TemplatesPage() {
               </label>
             </search>
           </div>
-          <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto">
+          <div className="flex flex-wrap items-center gap-1.5">
             <span className="font-ui mr-1 shrink-0 text-[10px] font-bold uppercase tracking-[0.18em] text-[#6E655F]">
               Mechanic:
             </span>

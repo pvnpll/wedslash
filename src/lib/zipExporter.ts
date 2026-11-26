@@ -98,7 +98,7 @@ export function buildStandaloneHtml(config: InvitationConfig, guest = "Honored G
       <div class="seal">✦</div>
       <p style="font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold)">${esc(blessing.sacredQuote)}</p>
       <h2 class="disp" style="font-size:28px;margin:14px 0 6px">${esc(couple.groomName)} &amp; ${esc(couple.brideName)}</h2>
-      <p style="font-size:11px;opacity:.75;letter-spacing:.18em;text-transform:uppercase">${esc(mechanics.entryType.replace("-", " "))}</p>
+      <p style="font-size:11px;opacity:.75;letter-spacing:.18em;text-transform:uppercase">${esc(mechanics.entryType.replace(/-/g, " "))}</p>
       <span style="margin-top:18px;border:1px solid var(--gold);border-radius:99px;padding:5px 14px;font-size:11px">For · <span id="guestLabel">${esc(guest)}</span></span>
     </button>
     <p class="eyebrow" style="margin-top:20px">Tap the cover to open</p>

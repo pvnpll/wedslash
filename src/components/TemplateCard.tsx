@@ -1,7 +1,7 @@
 "use client";
 import { memo } from "react";
 import Link from "next/link";
-import { Star, ArrowUpRight, Zap, Plane, Camera, Sparkles, Gem, Flame } from "lucide-react";
+import { Star, ArrowUpRight, Zap, Plane, Camera, Sparkles, Gem, Flame, Fingerprint, Droplets, RotateCw, Scissors } from "lucide-react";
 import type { Template } from "@/lib/types";
 import { getPresetConfig } from "@/lib/templates";
 
@@ -254,6 +254,80 @@ function ThumbnailVisual({ t }: { t: Template }) {
           </div>
           <p className="font-ui mt-2 text-[8px] uppercase tracking-[0.2em] text-[#FFC94D]">{dStr} · {mStr} · {yStr}</p>
         </div>
+      </div>
+    );
+  }
+
+  if (t.previewType === "bloom") {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-4" style={{ background: `radial-gradient(circle, ${t.gold}28 0%, #FDF8EF 75%)` }}>
+        <div className="relative grid h-28 w-28 place-items-center rounded-full border-2 border-dashed transition-transform duration-300 group-hover:scale-105" style={{ borderColor: t.gold }}>
+          <div className="grid h-20 w-20 place-items-center rounded-full shadow-xl" style={{ background: `radial-gradient(circle at 30% 30%, ${t.primary}, #1E090C)` }}>
+            <Fingerprint size={28} style={{ color: t.gold }} />
+          </div>
+        </div>
+        <p className="font-display mt-2.5 text-base font-bold" style={{ color: t.primary }}>{g} &amp; {b}</p>
+        <p className="font-ui text-[8px] uppercase tracking-[0.22em] text-[#6E655F]">Hold Heartbeat · {dStr} {mStr}</p>
+      </div>
+    );
+  }
+
+  if (t.previewType === "constellation") {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-4" style={{ background: "radial-gradient(circle at 50% 25%, #1D3557 0%, #091322 85%)" }}>
+        <div className="relative h-32 w-52 rounded-2xl border border-white/15 bg-black/20 p-3 transition-transform duration-300 group-hover:scale-105">
+          <svg viewBox="0 0 100 60" className="h-full w-full">
+            <polyline points="15,44 38,18 64,42 86,16" fill="none" stroke={t.gold} strokeWidth="1.5" strokeDasharray="3 2" />
+            {[[15, 44], [38, 18], [64, 42], [86, 16]].map(([cx, cy], idx) => (
+              <circle key={idx} cx={cx} cy={cy} r="3.4" fill={t.gold} />
+            ))}
+          </svg>
+        </div>
+        <p className="font-display mt-2 text-base font-bold text-white">{g} &amp; {b}</p>
+        <p className="font-ui text-[8px] uppercase tracking-[0.22em]" style={{ color: t.gold }}>Trace 4 Stars · {dStr} {mStr}</p>
+      </div>
+    );
+  }
+
+  if (t.previewType === "tear") {
+    return (
+      <div className="flex h-full items-center justify-center p-4" style={{ background: "#F5F2EB" }}>
+        <div className="w-52 overflow-hidden rounded-2xl border bg-white shadow-xl transition-transform duration-300 group-hover:scale-105" style={{ borderColor: `${t.gold}77` }}>
+          <div className="flex items-center justify-between border-b-2 border-dashed px-3 py-2 text-white" style={{ background: t.primary, borderColor: t.gold }}>
+            <span className="font-ui text-[8px] font-bold uppercase tracking-[0.2em]" style={{ color: t.gold }}>Zip Strip</span>
+            <Scissors size={12} style={{ color: t.gold }} />
+          </div>
+          <div className="px-4 py-5 text-center">
+            <p className="font-display text-lg font-bold" style={{ color: t.primary }}>{g} &amp; {b}</p>
+            <p className="font-ui mt-1 text-[8px] uppercase tracking-[0.2em] text-[#6E655F]">{dStr} · {mStr} · {yStr}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (t.previewType === "frost") {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-4" style={{ background: "linear-gradient(155deg, #E8ECEF, #F8F5EE)" }}>
+        <div className="flex h-36 w-52 flex-col items-center justify-center rounded-2xl border border-white bg-white/60 p-4 text-center shadow-lg transition-transform duration-300 group-hover:scale-105">
+          <Droplets size={24} style={{ color: t.primary }} />
+          <p className="font-display mt-2 text-lg font-bold" style={{ color: t.primary }}>{g} &amp; {b}</p>
+          <p className="font-ui mt-1 text-[8px] uppercase tracking-[0.2em] text-[#6E655F]">Wipe Lake Mist · {dStr} {mStr}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (t.previewType === "dial") {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-4" style={{ background: `radial-gradient(circle, #0D4B38 0%, #07261C 85%)` }}>
+        <div className="grid h-28 w-28 place-items-center rounded-full border-2 border-dashed transition-transform duration-500 group-hover:rotate-45" style={{ borderColor: t.gold }}>
+          <div className="grid h-16 w-16 place-items-center rounded-full border bg-black/40" style={{ borderColor: t.gold, color: t.gold }}>
+            <RotateCw size={22} />
+          </div>
+        </div>
+        <p className="font-display mt-2 text-base font-bold text-[#FFF8E7]">{g} &amp; {b}</p>
+        <p className="font-ui text-[8px] uppercase tracking-[0.22em]" style={{ color: t.gold }}>Spin Dial 180° · {dStr} {mStr}</p>
       </div>
     );
   }

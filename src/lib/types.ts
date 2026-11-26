@@ -30,7 +30,12 @@ export type EntryType =
   | "boarding-pass"
   | "curtain-reveal"
   | "ring-box"
-  | "diya-lamp";
+  | "diya-lamp"
+  | "biometric-bloom"
+  | "constellation-trace"
+  | "tear-perforation"
+  | "frost-wipe"
+  | "mandala-dial";
 
 export type DateRevealType =
   | "pull-tassel-scroll"
@@ -193,7 +198,22 @@ export interface Template {
   particle: string;
   rating: number;
   uses: string;
-  previewType: "book" | "envelope" | "boarding" | "scratch" | "petals" | "polaroid" | "arch" | "vip" | "ring" | "diya";
+  previewType:
+    | "book"
+    | "envelope"
+    | "boarding"
+    | "scratch"
+    | "petals"
+    | "polaroid"
+    | "arch"
+    | "vip"
+    | "ring"
+    | "diya"
+    | "bloom"
+    | "constellation"
+    | "tear"
+    | "frost"
+    | "dial";
 }
 
 export interface GuestRsvp {

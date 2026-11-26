@@ -1,7 +1,7 @@
 "use client";
 import { motion, useReducedMotion } from "framer-motion";
-import { memo, useEffect, useState } from "react";
-import { Hand } from "lucide-react";
+import { memo, useRef, useState } from "react";
+import { BookOpen, MoveLeft } from "lucide-react";
 import ParticleCanvas from "../ParticleCanvas";
 import { CulturalEmblem } from "../icons/CulturalEmblems";
 import type { SacredSymbol } from "@/lib/types";
@@ -26,25 +26,25 @@ export interface BookGateProps {
 
 const SYMBOL_DEFAULT_QUOTE: Record<SacredSymbol, string> = {
   ganesh: "Shree Ganeshaya Namah",
-  om: "Om Shanti · Shubh Vivah",
+  om: "Om Shubhamastu",
   "ik-onkar": "Ik Onkar Satnam",
-  bismillah: "With Blessings & Grace",
-  cross: "Joined in Love & Faith",
-  "floral-crest": "A Celebration of Love",
-  passport: "Cleared for Celebration",
-  crown: "Royal Celebration",
+  bismillah: "Bismillah-ir-Rahman-ir-Rahim",
+  cross: "Joined Together in Christ",
+  "floral-crest": "Two Souls, One Forever",
+  passport: "Cleared for Takeoff",
+  crown: "Royally Invited",
   none: "",
 };
 
-function BlurInText({
+function RevealWordSpan({
   text,
-  delay = 0,
+  delay,
   reduced,
-  className = "",
+  className,
   style,
 }: {
   text: string;
-  delay?: number;
+  delay: number;
   reduced: boolean;
   className?: string;
   style?: React.CSSProperties;
@@ -54,7 +54,7 @@ function BlurInText({
     <span className={className} style={style} aria-label={text}>
       {chars.map((char, idx) =>
         reduced ? (
-          <span key={`${idx}-${char}`}>{char === " " ? " " : char}</span>
+          <span key={`${idx}-${char}`}>{char === " " ? "\u00A0" : char}</span>
         ) : (
           <motion.span
             key={`${idx}-${char}`}
@@ -68,7 +68,7 @@ function BlurInText({
             }}
             className="inline-block"
           >
-            {char === " " ? " " : char}
+            {char === " " ? "\u00A0" : char}
           </motion.span>
         )
       )}
@@ -76,6 +76,11 @@ function BlurInText({
   );
 }
 
+/**
+ * 3D Velvet Hardcover Book Gate: supports live left-swipe cover peeling
+ * (1:1 rotateY follow) or accessible tap, keeping the velvet spine edge
+ * and ribbon bookmark integrated after opening with zero snap/unmount pop.
+ */
 function BookGateComponent({
   groom,
   bride,
@@ -88,58 +93,102 @@ function BookGateComponent({
   primary = "#6E1F2F",
   gold = "#D4AF37",
   compact = false,
-  tapLabel = "Tap the book to open",
+  tapLabel = "Swipe left or tap to turn cover",
   heroPhotoUrl,
   kenBurnsEnabled = true,
   onOpen,
 }: BookGateProps) {
   const prefersReduced = useReducedMotion() ?? false;
-  const [phase, setPhase] = useState<"closed" | "opening" | "open">("closed");
+  const [opened, setOpened] = useState(false);
+  const [dragAngle, setDragAngle] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const draggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const movedRef = useRef(false);
 
-  useEffect(() => {
-    if (phase !== "opening") return;
-    const timer = window.setTimeout(
-      () => setPhase("open"),
-      prefersReduced ? 50 : 880
-    );
-    return () => window.clearTimeout(timer);
-  }, [phase, prefersReduced]);
+  const resolvedQuote = sacredQuote ?? SYMBOL_DEFAULT_QUOTE[symbol];
 
-  const handleOpen = () => {
-    if (phase !== "closed") return;
-    setPhase(prefersReduced ? "open" : "opening");
+  const triggerOpen = () => {
+    if (opened) return;
+    draggingRef.current = false;
+    setIsDragging(false);
+    setOpened(true);
+    setDragAngle(-168);
     onOpen?.();
   };
 
-  const resolvedQuote = sacredQuote ?? SYMBOL_DEFAULT_QUOTE[symbol];
-  const isOpened = phase === "open";
-  const isSwinging = phase === "opening";
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (opened || prefersReduced) return;
+    draggingRef.current = true;
+    setIsDragging(true);
+    startXRef.current = e.clientX;
+    movedRef.current = false;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!draggingRef.current || opened || prefersReduced) return;
+    const dx = e.clientX - startXRef.current;
+    if (Math.abs(dx) > 6) movedRef.current = true;
+    // Swiping left turns the cover open smoothly (up to -130 deg live)
+    const nextAngle = Math.max(-130, Math.min(0, (dx / 180) * 130));
+    setDragAngle(nextAngle);
+    if (dx <= -95) {
+      triggerOpen();
+    }
+  };
+
+  const handlePointerEnd = () => {
+    if (!draggingRef.current || opened) return;
+    draggingRef.current = false;
+    setIsDragging(false);
+    if (dragAngle < -42 || !movedRef.current) {
+      triggerOpen();
+    } else {
+      setDragAngle(0);
+    }
+  };
+
+  const progress = opened ? 1 : Math.min(1, Math.abs(dragAngle) / 140);
 
   return (
     <div
-      className={`relative flex h-full min-h-[580px] w-full flex-col items-center justify-center overflow-hidden bg-[#FDF3EC] paper-grain ${
-        compact ? "px-4 py-2" : "px-4 py-4"
+      className={`relative flex h-full min-h-[600px] w-full flex-col items-center justify-center overflow-hidden bg-[#FDF3EC] paper-grain ${
+        compact ? "px-4 py-3" : "px-4 py-6"
       }`}
-      style={{ perspective: 1400 }}
+      style={{ perspective: 1500 }}
     >
       <ParticleCanvas type="marigold-petals" density={compact ? 14 : 20} />
 
-      {/* Page 1 Arch Frame (scales in during cover hinge & rests when open) */}
-      {(isSwinging || isOpened) && (
+      <div className="relative z-10 flex w-full max-w-[360px] items-center justify-center">
+        {/* Inner Arch Page (always mounted inside the opened book cover; blooms smoothly as cover turns) */}
         <motion.div
-          initial={prefersReduced ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.88 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: prefersReduced ? 0 : 0.78, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-10 flex w-full max-w-[360px] flex-col items-center justify-center"
+          initial={false}
+          animate={{
+            opacity: opened ? 1 : 0.25 + progress * 0.75,
+            scale: opened ? 1 : 0.94 + progress * 0.06,
+          }}
+          transition={{ duration: prefersReduced ? 0.15 : 0.72, ease: [0.22, 1, 0.36, 1] }}
+          className="relative w-full"
+          style={{ willChange: "transform, opacity" }}
+          aria-hidden={!opened}
         >
+          {/* Left Velvet Spine Binding Lip that stays visible as a physical book frame */}
           <div
-            className="arch-frame relative flex min-h-[580px] w-full flex-col items-center justify-center overflow-hidden border-2 px-6 py-8 text-center shadow-[0_30px_70px_-24px_rgba(22,20,18,0.32)]"
+            className="arch-frame relative flex min-h-[560px] w-full flex-col items-center justify-center overflow-hidden border-2 px-6 py-8 text-center shadow-[0_32px_70px_-24px_rgba(22,20,18,0.36)]"
             style={{
-              borderColor: `${gold}`,
+              borderColor: gold,
               background: "#FFFDF8",
+              boxShadow: `inset 12px 0 24px -14px ${primary}55, 0 32px 70px -24px rgba(22,20,18,0.36)`,
             }}
           >
-            {/* Soft Ken Burns portrait or gradient + shimmer background */}
+            {/* Left Velvet Margin Spine Strip */}
+            <div
+              className="pointer-events-none absolute inset-y-0 left-0 w-2.5"
+              style={{ background: `linear-gradient(180deg, ${primary}, #240910)` }}
+              aria-hidden="true"
+            />
+
             {heroPhotoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -161,19 +210,15 @@ function BookGateComponent({
               aria-hidden="true"
             />
             <div
-              className="foil-sheen pointer-events-none absolute inset-0 opacity-[0.07]"
-              aria-hidden="true"
-            />
-            <div
-              className="arch-frame pointer-events-none absolute inset-2.5 border"
+              className="arch-frame pointer-events-none absolute inset-2.5 left-4 border"
               style={{ borderColor: `${gold}66` }}
               aria-hidden="true"
             />
 
-            <div className="relative z-10 flex flex-col items-center">
+            <div className="relative z-10 flex flex-col items-center pl-1">
               {symbol !== "none" && (
                 <div
-                  className="grid h-14 w-14 place-items-center rounded-full border-2 bg-white/90 shadow-sm"
+                  className="grid h-14 w-14 place-items-center rounded-full border-2 bg-white/95 shadow-sm"
                   style={{ borderColor: gold }}
                 >
                   <CulturalEmblem symbol={symbol} color={primary} size={32} />
@@ -197,7 +242,11 @@ function BookGateComponent({
                 className={`font-display mt-3 font-bold leading-none ${compact ? "text-4xl" : "text-5xl"}`}
                 style={{ color: primary }}
               >
-                <BlurInText text={groom} delay={0.14} reduced={prefersReduced} />
+                {opened ? (
+                  <RevealWordSpan text={groom} delay={0.08} reduced={prefersReduced} />
+                ) : (
+                  groom
+                )}
               </h2>
               {groomParents && (
                 <p className="font-ui mt-1.5 text-[10px] uppercase tracking-[0.18em] text-[#6E655F]">
@@ -213,7 +262,11 @@ function BookGateComponent({
                 className={`font-display font-bold leading-none ${compact ? "text-4xl" : "text-5xl"}`}
                 style={{ color: primary }}
               >
-                <BlurInText text={bride} delay={0.38} reduced={prefersReduced} />
+                {opened ? (
+                  <RevealWordSpan text={bride} delay={0.32} reduced={prefersReduced} />
+                ) : (
+                  bride
+                )}
               </h2>
               {brideParents && (
                 <p className="font-ui mt-1.5 text-[10px] uppercase tracking-[0.18em] text-[#6E655F]">
@@ -233,7 +286,7 @@ function BookGateComponent({
               </p>
 
               <motion.span
-                animate={prefersReduced ? undefined : { y: [0, 7, 0] }}
+                animate={prefersReduced || !opened ? undefined : { y: [0, 6, 0] }}
                 transition={{ repeat: Infinity, duration: 1.6 }}
                 className="font-ui mt-5 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#6E655F]"
               >
@@ -242,41 +295,60 @@ function BookGateComponent({
             </div>
           </div>
         </motion.div>
-      )}
 
-      {/* 3D Hinged Velvet Cover */}
-      {!isOpened && (
-        <button
+        {/* Overlaid 3D Hinged Velvet Cover (stays mounted and smoothly fades after swinging past 160deg) */}
+        <motion.button
           type="button"
-          onClick={handleOpen}
-          className={`${isSwinging ? "pointer-events-none absolute inset-0 m-auto" : "relative"} z-20 flex flex-col items-center justify-center outline-none`}
-          style={{ transformStyle: "preserve-3d" }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerEnd}
+          onPointerCancel={handlePointerEnd}
+          onClick={() => {
+            if (!opened && !movedRef.current) triggerOpen();
+          }}
+          initial={false}
+          animate={{
+            opacity: opened ? 0 : 1,
+            scale: opened ? 0.98 : 1,
+          }}
+          transition={{ duration: prefersReduced ? 0.15 : 0.78, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center outline-none"
+          style={{
+            transformStyle: "preserve-3d",
+            touchAction: "pan-y",
+            pointerEvents: opened ? "none" : "auto",
+            willChange: "opacity, transform",
+          }}
           aria-label={tapLabel}
+          tabIndex={opened ? -1 : 0}
         >
           <motion.div
-            initial={{ rotateY: 0, opacity: 1 }}
+            initial={false}
             animate={
-              isSwinging
-                ? { rotateY: -165, opacity: [1, 1, 0] }
-                : { rotateY: 0, opacity: 1 }
+              opened
+                ? { rotateY: prefersReduced ? 0 : -168 }
+                : { rotateY: dragAngle }
             }
-            whileHover={!isSwinging && !prefersReduced ? { rotateY: -8, scale: 1.02 } : undefined}
-            transition={{
-              rotateY: { duration: prefersReduced ? 0 : 0.85, ease: [0.22, 1, 0.36, 1] },
-              opacity: { duration: prefersReduced ? 0 : 0.85, times: [0, 0.65, 1] },
-              scale: { type: "spring", stiffness: 180, damping: 20 },
-            }}
-            className="relative aspect-[3/4.1] w-56 overflow-hidden rounded-r-xl rounded-l-[4px] shadow-[0_30px_60px_-15px_rgba(110,31,47,0.55)] sm:w-64"
+            whileHover={!opened && dragAngle === 0 && !prefersReduced ? { rotateY: -9, scale: 1.015 } : undefined}
+            transition={
+              isDragging
+                ? { duration: 0 }
+                : {
+                    rotateY: { duration: prefersReduced ? 0 : 0.88, ease: [0.22, 1, 0.36, 1] },
+                    scale: { type: "spring", stiffness: 200, damping: 22 },
+                  }
+            }
+            className="relative aspect-[3/4.1] w-60 overflow-hidden rounded-r-2xl rounded-l-[6px] shadow-[0_34px_65px_-16px_rgba(110,31,47,0.58)] sm:w-64"
             style={{
               transformOrigin: "left center",
               transformStyle: "preserve-3d",
-              willChange: "transform, opacity",
+              willChange: "transform",
               background: `linear-gradient(150deg, ${primary} 0%, #240910 72%, ${primary} 100%)`,
               border: `1.5px solid ${gold}`,
             }}
           >
             <div
-              className="absolute inset-2.5 rounded-r-lg rounded-l-[2px] border"
+              className="absolute inset-2.5 rounded-r-xl rounded-l-[2px] border"
               style={{ borderColor: `${gold}88` }}
             />
             <div className="absolute left-3.5 top-0 h-full w-[3px] bg-black/35" />
@@ -314,21 +386,16 @@ function BookGateComponent({
                 For · {guestName}
               </div>
             </div>
-            {/* Spine shine */}
+            {/* Spine specular sheen */}
             <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-white/15 to-transparent" />
           </motion.div>
 
-          {!isSwinging && (
-            <motion.span
-              animate={prefersReduced ? undefined : { y: [0, 7, 0] }}
-              transition={{ repeat: Infinity, duration: 1.8 }}
-              className="font-ui mt-5 inline-flex items-center gap-2 rounded-full bg-[#161412] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-white shadow-lg"
-            >
-              <Hand size={15} /> {tapLabel}
-            </motion.span>
-          )}
-        </button>
-      )}
+          <span className="font-ui mt-4 inline-flex items-center gap-2 rounded-full bg-[#161412] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-white shadow-lg">
+            <MoveLeft size={14} className="text-[#F6E27A]" />
+            <BookOpen size={14} /> {tapLabel}
+          </span>
+        </motion.button>
+      </div>
     </div>
   );
 }

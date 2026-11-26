@@ -6,6 +6,11 @@ import BookGate from "./mechanics/BookGate";
 import EnvelopeGate from "./mechanics/EnvelopeGate";
 import RingBoxGate from "./mechanics/RingBoxGate";
 import DiyaLampGate from "./mechanics/DiyaLampGate";
+import BiometricBloomGate from "./mechanics/BiometricBloomGate";
+import ConstellationGate from "./mechanics/ConstellationGate";
+import TearPerforationGate from "./mechanics/TearPerforationGate";
+import FrostWipeGate from "./mechanics/FrostWipeGate";
+import MandalaDialGate from "./mechanics/MandalaDialGate";
 import TasselScroll from "./mechanics/TasselScroll";
 import ScratchCard from "./mechanics/ScratchCard";
 import BrushPetalsReveal from "./mechanics/BrushPetalsReveal";
@@ -190,6 +195,53 @@ function InviteRendererComponent({
             primary={template.primary}
             gold={template.gold}
             tapLabel={cfg.language === "english" ? undefined : copy.tapBook}
+            onOpen={handleGateOpen}
+          />
+        ) : entryType === "biometric-bloom" ? (
+          <BiometricBloomGate
+            groom={cfg.couple.groomName}
+            bride={cfg.couple.brideName}
+            monogram={cfg.couple.monogram}
+            guestName={guestName}
+            primary={template.primary}
+            gold={template.gold}
+            onOpen={handleGateOpen}
+          />
+        ) : entryType === "constellation-trace" ? (
+          <ConstellationGate
+            groom={cfg.couple.groomName}
+            bride={cfg.couple.brideName}
+            guestName={guestName}
+            primary={template.primary}
+            gold={template.gold}
+            onOpen={handleGateOpen}
+          />
+        ) : entryType === "tear-perforation" ? (
+          <TearPerforationGate
+            groom={cfg.couple.groomName}
+            bride={cfg.couple.brideName}
+            guestName={guestName}
+            primary={template.primary}
+            gold={template.gold}
+            onOpen={handleGateOpen}
+          />
+        ) : entryType === "frost-wipe" ? (
+          <FrostWipeGate
+            groom={cfg.couple.groomName}
+            bride={cfg.couple.brideName}
+            guestName={guestName}
+            primary={template.primary}
+            gold={template.gold}
+            onOpen={handleGateOpen}
+          />
+        ) : entryType === "mandala-dial" ? (
+          <MandalaDialGate
+            groom={cfg.couple.groomName}
+            bride={cfg.couple.brideName}
+            monogram={cfg.couple.monogram}
+            guestName={guestName}
+            primary={template.primary}
+            gold={template.gold}
             onOpen={handleGateOpen}
           />
         ) : entryType === "velvet-book" ? (

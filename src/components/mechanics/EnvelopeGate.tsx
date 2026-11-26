@@ -1,7 +1,8 @@
 "use client";
-import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { Hand } from "lucide-react";
+import { motion, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
+import { memo, useState } from "react";
+import { ChevronDown, ChevronsRight, MoveHorizontal } from "lucide-react";
+import GateRevealedCard from "./GateRevealedCard";
 
 export interface EnvelopeGateProps {
   variant?: "wax-envelope" | "palace-doors" | "curtain-reveal";
@@ -17,7 +18,16 @@ export interface EnvelopeGateProps {
   onOpen?: () => void;
 }
 
-export default function EnvelopeGate({
+/**
+ * Three tactile gesture gates sharing spatial depth behind every barrier:
+ * - wax-envelope: swipe-to-unseal satin ribbon (or tap), flap hinges open and
+ *   the card slides up seamlessly out of the receding envelope pocket.
+ * - palace-doors: pull the brass bolt down to unlatch 3D swinging Jharokha doors
+ *   over the pre-mounted invitation courtyard.
+ * - curtain-reveal: drag the braided golden curtain cord down to part velvet drapes
+ *   over the illuminated invitation card.
+ */
+function EnvelopeGateComponent({
   variant = "wax-envelope",
   groom,
   bride,
@@ -31,22 +41,15 @@ export default function EnvelopeGate({
   onOpen,
 }: EnvelopeGateProps) {
   const prefersReduced = useReducedMotion() ?? false;
-  const [stage, setStage] = useState<"closed" | "animating" | "open">("closed");
+  const [opened, setOpened] = useState(false);
 
-  useEffect(() => {
-    if (stage !== "animating") return;
-    const timer = window.setTimeout(
-      () => setStage("open"),
-      prefersReduced ? 40 : 950
-    );
-    return () => window.clearTimeout(timer);
-  }, [stage, prefersReduced]);
-
-  const handleOpen = () => {
-    if (stage !== "closed") return;
-    setStage(prefersReduced ? "open" : "animating");
-    onOpen?.();
-  };
+  // Live pull values for continuous gesture feedback before threshold
+  const swipeX = useMotionValue(0);
+  const boltY = useMotionValue(0);
+  const cordY = useMotionValue(0);
+  const ribbonOpacity = useTransform(swipeX, [0, 140], [1, 0]);
+  const doorGap = useTransform(boltY, [0, 68], [0, 14]);
+  const curtainPeek = useTransform(cordY, [0, 80], [0, 18]);
 
   const displayMonogram =
     monogram ||
@@ -66,273 +69,353 @@ export default function EnvelopeGate({
       ? `celebrating in ${city} — and you are on the guest list.`
       : "joyfully invite you to share in our celebration.";
 
-  const defaultTapLabel =
+  const defaultGestureLabel =
     variant === "palace-doors"
-      ? "Tap to open the palace doors"
+      ? "Pull brass bolt down to unlatch"
       : variant === "curtain-reveal"
-      ? "Tap to part the curtains"
-      : "Tap the seal to open";
-  const ctaText = tapLabel ?? defaultTapLabel;
+      ? "Pull velvet cord down to part"
+      : "Swipe seal or tap to unseal";
+  const ctaText = tapLabel ?? defaultGestureLabel;
 
-  const isAnimating = stage === "animating";
-  const isOpen = stage === "open";
+  const triggerOpen = () => {
+    if (opened) return;
+    setOpened(true);
+    onOpen?.();
+  };
 
   return (
     <div
-      className="relative flex h-full min-h-[580px] w-full flex-col items-center justify-center overflow-hidden bg-[#FDF8EF] paper-grain px-6 py-10"
-      style={{ perspective: 1300 }}
+      className="relative flex h-full min-h-[600px] w-full flex-col items-center justify-center overflow-hidden bg-[#FDF8EF] paper-grain px-5 py-8"
+      style={{ perspective: 1400 }}
     >
-      {/* Revealed Invitation Card */}
-      {(isAnimating || isOpen) && (
+      {/* Revealed card sits permanently in place behind doors/curtains, or blooms upward out of envelope */}
+      <motion.div
+        initial={false}
+        animate={
+          variant === "wax-envelope"
+            ? opened
+              ? { y: 0, scale: 1, opacity: 1 }
+              : { y: 42, scale: 0.9, opacity: 0 }
+            : { y: 0, scale: opened ? 1 : 0.97, opacity: 1 }
+        }
+        transition={{
+          duration: prefersReduced ? 0.15 : 0.85,
+          delay: variant === "wax-envelope" && opened && !prefersReduced ? 0.18 : 0,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+        className="relative z-10 w-full max-w-sm"
+        style={{ willChange: "transform, opacity" }}
+      >
+        <GateRevealedCard
+          guestName={guestName}
+          headline={coupleHeadline}
+          subline={locationLine}
+          badgeText={[venueTitle, city].filter(Boolean).join(" · ") || undefined}
+          primary={primary}
+          gold={gold}
+          revealed={opened || variant !== "wax-envelope"}
+        />
+      </motion.div>
+
+      {/* LAYERED ENTRY BARRIER — smoothly animates out with zero hard DOM pop */}
+      {variant === "wax-envelope" && (
         <motion.div
-          initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 36, scale: 0.94 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: prefersReduced ? 0 : 0.75, delay: isAnimating ? 0.2 : 0, ease: [0.22, 1, 0.36, 1] }}
-          className="z-10 w-full max-w-sm rounded-3xl border bg-white/95 px-6 py-9 text-center shadow-2xl"
-          style={{ borderColor: `${gold}66` }}
+          initial={false}
+          animate={
+            opened
+              ? { y: prefersReduced ? 0 : 110, opacity: 0, scale: 0.94 }
+              : { y: 0, opacity: 1, scale: 1 }
+          }
+          transition={{ duration: prefersReduced ? 0.15 : 0.82, delay: opened ? 0.15 : 0, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-5"
+          style={{
+            pointerEvents: opened ? "none" : "auto",
+            willChange: "transform, opacity",
+            transformStyle: "preserve-3d",
+          }}
         >
-          <p className="font-ui text-[10px] font-bold uppercase tracking-[0.3em] text-[#6E655F]">
-            Cordially Welcoming
-          </p>
-          <p className="font-script mt-1 text-4xl" style={{ color: gold }}>
-            {guestName}
-          </p>
-          <div
-            className="mx-auto my-3 h-px w-16"
-            style={{ background: `linear-gradient(90deg, transparent, ${gold}, transparent)` }}
-          />
-          <h2 className="font-display text-4xl font-bold leading-tight sm:text-5xl" style={{ color: primary }}>
-            {coupleHeadline}
-          </h2>
-          <p className="font-editorial mt-3 text-lg italic leading-relaxed text-[#161412]/80">
-            {locationLine}
-          </p>
-          {(venueTitle || city) && (
-            <p
-              className="font-ui mt-4 inline-block rounded-full border px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.2em]"
-              style={{ borderColor: `${gold}66`, color: primary }}
+          <div className="relative w-72 sm:w-80" style={{ transformStyle: "preserve-3d" }}>
+            {/* Top Flap hinges upward cleanly before envelope recedes */}
+            <motion.div
+              initial={false}
+              animate={opened ? { rotateX: prefersReduced ? 0 : 172 } : { rotateX: 0 }}
+              transition={{ duration: prefersReduced ? 0 : 0.62, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-x-0 top-0 z-20 h-36 origin-top shadow-md"
+              style={{
+                transformStyle: "preserve-3d",
+                background: `linear-gradient(180deg, ${primary}, ${primary}DD)`,
+                clipPath: "polygon(0 0, 100% 0, 50% 100%)",
+              }}
+            />
+
+            {/* Envelope Pocket Body */}
+            <div className="relative z-10 rounded-2xl border border-black/10 bg-[#FFFDF6] px-6 pb-8 pt-40 text-center shadow-2xl">
+              <div
+                className="mx-auto inline-block rounded-full border px-3.5 py-1 font-ui text-[10px] font-semibold uppercase tracking-[0.24em] text-[#6E655F]"
+                style={{ borderColor: `${gold}55` }}
+              >
+                Invitation For
+              </div>
+              <p className="font-display mt-2 text-2xl font-bold text-[#161412]">{guestName}</p>
+
+              {/* Draggable Satin Seal Strip Track */}
+              <div
+                className="relative mx-auto mt-4 flex h-12 w-56 items-center overflow-hidden rounded-full border bg-[#FAF3E6] p-1"
+                style={{ borderColor: `${gold}66` }}
+              >
+                <motion.span
+                  style={{ opacity: ribbonOpacity }}
+                  className="pointer-events-none inset-x-0 text-center font-ui text-[10px] font-bold uppercase tracking-[0.18em] text-[#6E655F] w-full pl-9"
+                >
+                  Slide seal →
+                </motion.span>
+                <motion.button
+                  type="button"
+                  drag={prefersReduced || opened ? false : "x"}
+                  dragConstraints={{ left: 0, right: 168 }}
+                  dragElastic={0.08}
+                  style={{
+                    x: swipeX,
+                    touchAction: "none",
+                    borderColor: `${gold}AA`,
+                    background: `radial-gradient(circle at 35% 30%, ${gold}, ${primary})`,
+                  }}
+                  onDragEnd={(_, info) => {
+                    if (info.offset.x > 85) triggerOpen();
+                  }}
+                  onClick={triggerOpen}
+                  aria-label={ctaText}
+                  tabIndex={opened ? -1 : 0}
+                  whileHover={!opened && !prefersReduced ? { scale: 1.06 } : undefined}
+                  className="absolute left-1 z-30 grid h-10 w-10 place-items-center rounded-full border text-xs font-bold text-white shadow-lg"
+                >
+                  <ChevronsRight size={16} />
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Wax Seal Crest */}
+            <motion.div
+              initial={false}
+              animate={
+                opened
+                  ? { scale: [1, 1.15, 0], opacity: [1, 0.8, 0], rotate: 18 }
+                  : { scale: 1, opacity: 1, rotate: 0 }
+              }
+              transition={{ duration: prefersReduced ? 0 : 0.45 }}
+              onClick={triggerOpen}
+              className="absolute left-1/2 top-28 z-30 grid h-16 w-16 -translate-x-1/2 cursor-pointer place-items-center rounded-full border-2 text-base font-bold text-white shadow-xl"
+              style={{
+                borderColor: `${gold}99`,
+                background: `radial-gradient(circle at 35% 30%, ${gold}, ${primary})`,
+              }}
             >
-              {[venueTitle, city].filter(Boolean).join(" · ")}
-            </p>
-          )}
-          <motion.p
-            animate={prefersReduced ? undefined : { y: [0, 6, 0] }}
-            transition={{ repeat: Infinity, duration: 1.6 }}
-            className="font-ui mt-5 text-[11px] font-semibold uppercase tracking-[0.3em] text-[#6E655F]"
-          >
-            Scroll ↓
-          </motion.p>
+              <span className="font-display tracking-wider">{displayMonogram}</span>
+            </motion.div>
+          </div>
+          <p className="font-ui mt-4 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6E655F]">
+            <MoveHorizontal size={13} /> {ctaText}
+          </p>
         </motion.div>
       )}
 
-      {/* Closed / Animating Entry Gates */}
-      {!isOpen && (
-        <button
-          type="button"
-          onClick={handleOpen}
-          className={`${isAnimating ? "pointer-events-none absolute inset-0 m-auto" : "relative"} z-20 flex flex-col items-center justify-center outline-none`}
-          aria-label={ctaText}
+      {variant === "palace-doors" && (
+        <motion.div
+          initial={false}
+          animate={{ opacity: opened ? 0 : 1 }}
+          transition={{ duration: 0.45, delay: opened ? 0.55 : 0 }}
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-5"
+          style={{
+            pointerEvents: opened ? "none" : "auto",
+            willChange: "opacity",
+            perspective: 1200,
+          }}
         >
-          {variant === "wax-envelope" && (
+          <div
+            className="arch-frame relative h-[440px] w-full max-w-sm overflow-hidden border-2 bg-transparent shadow-2xl"
+            style={{ borderColor: gold }}
+          >
+            {/* Left Carved Palace Door — swings inward in 3D */}
             <motion.div
-              whileHover={!isAnimating && !prefersReduced ? { scale: 1.03 } : undefined}
-              whileTap={!isAnimating && !prefersReduced ? { scale: 0.98 } : undefined}
-              className="relative w-72 sm:w-80"
-              style={{ transformStyle: "preserve-3d" }}
+              initial={false}
+              animate={
+                opened
+                  ? { x: "-100%", rotateY: prefersReduced ? 0 : 88 }
+                  : { x: 0, rotateY: 0 }
+              }
+              style={{
+                x: opened ? undefined : doorGap ? undefined : 0,
+                borderColor: `${gold}AA`,
+                background: `linear-gradient(135deg, ${primary} 0%, #240A10 100%)`,
+                transformOrigin: "left center",
+                willChange: "transform",
+              }}
+              transition={{ duration: prefersReduced ? 0.15 : 0.9, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-y-0 left-0 w-1/2 border-r p-3"
             >
-              {/* Inner letter peeking when flap lifts */}
-              <motion.div
-                initial={{ y: 0, opacity: 0.9 }}
-                animate={isAnimating ? { y: -28, opacity: 1 } : { y: 0, opacity: 0.9 }}
-                transition={{ duration: 0.65, delay: 0.25 }}
-                className="absolute inset-x-4 top-5 z-10 h-24 rounded-t-xl border bg-white/95 p-3 text-center shadow-sm"
-                style={{ borderColor: `${gold}55` }}
-              >
-                <p className="font-script text-2xl" style={{ color: primary }}>
-                  {coupleHeadline}
-                </p>
-              </motion.div>
-
-              {/* Top Flap (rotateX 180deg on crack) */}
-              <motion.div
-                initial={{ rotateX: 0 }}
-                animate={isAnimating ? { rotateX: 180 } : { rotateX: 0 }}
-                transition={{ duration: prefersReduced ? 0 : 0.72, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute inset-x-0 top-0 z-20 h-36 origin-top shadow-md"
-                style={{
-                  transformStyle: "preserve-3d",
-                  background: `linear-gradient(180deg, ${primary}, ${primary}DD)`,
-                  clipPath: "polygon(0 0, 100% 0, 50% 100%)",
-                }}
-              />
-
-              {/* Envelope body */}
-              <div className="relative z-10 rounded-2xl border border-black/10 bg-[#FFFDF6] px-6 pb-8 pt-40 text-center shadow-2xl">
-                <div
-                  className="mx-auto inline-block rounded-full border px-3.5 py-1 font-ui text-[10px] font-semibold uppercase tracking-[0.24em] text-[#6E655F]"
-                  style={{ borderColor: `${gold}55` }}
-                >
-                  Invitation For
-                </div>
-                <p className="font-display mt-2 text-2xl font-bold text-[#161412]">{guestName}</p>
-                <p className="font-ui mt-1.5 text-[11px] uppercase tracking-[0.2em] text-[#6E655F]">
-                  {ctaText}
-                </p>
+              <div className="h-full w-full rounded-tl-full border p-2" style={{ borderColor: `${gold}66` }}>
+                <div className="h-full w-full rounded-tl-full border border-dashed" style={{ borderColor: `${gold}44` }} />
               </div>
-
-              {/* Wax seal with crack animation */}
-              <motion.div
-                animate={
-                  isAnimating
-                    ? { scale: [1, 1.12, 0.92], opacity: [1, 1, 0] }
-                    : { scale: 1, opacity: 1 }
-                }
-                transition={{ duration: 0.45 }}
-                className="absolute left-1/2 top-28 z-30 grid h-16 w-16 -translate-x-1/2 place-items-center rounded-full border-2 text-base font-bold text-white shadow-xl"
-                style={{
-                  borderColor: `${gold}99`,
-                  background: `radial-gradient(circle at 35% 30%, ${gold}, ${primary})`,
-                }}
-              >
-                <span className="font-display tracking-wider">{displayMonogram}</span>
-                {isAnimating && (
-                  <svg viewBox="0 0 64 64" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-                    <motion.path
-                      d="M32 6L28 24L36 36L29 58"
-                      stroke="#FFFDF6"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      fill="none"
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ duration: 0.25 }}
-                    />
-                  </svg>
-                )}
-              </motion.div>
             </motion.div>
-          )}
 
-          {variant === "palace-doors" && (
-            <div className="flex flex-col items-center">
-              <div
-                className="arch-frame relative h-80 w-72 overflow-hidden border-2 bg-[#1A0D0E] shadow-2xl sm:w-80"
-                style={{ borderColor: gold }}
-              >
-                {/* Left Palace Door */}
-                <motion.div
-                  initial={{ x: 0 }}
-                  animate={isAnimating ? { x: "-100%" } : { x: 0 }}
-                  transition={{ duration: prefersReduced ? 0 : 0.85, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute inset-y-0 left-0 w-1/2 border-r p-3"
-                  style={{
-                    borderColor: `${gold}AA`,
-                    background: `linear-gradient(135deg, ${primary} 0%, #240A10 100%)`,
-                  }}
-                >
-                  <div className="h-full w-full rounded-tl-full border p-2" style={{ borderColor: `${gold}66` }}>
-                    <div className="h-full w-full rounded-tl-full border border-dashed" style={{ borderColor: `${gold}44` }} />
-                  </div>
-                </motion.div>
-
-                {/* Right Palace Door */}
-                <motion.div
-                  initial={{ x: 0 }}
-                  animate={isAnimating ? { x: "100%" } : { x: 0 }}
-                  transition={{ duration: prefersReduced ? 0 : 0.85, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute inset-y-0 right-0 w-1/2 border-l p-3"
-                  style={{
-                    borderColor: `${gold}AA`,
-                    background: `linear-gradient(225deg, ${primary} 0%, #240A10 100%)`,
-                  }}
-                >
-                  <div className="h-full w-full rounded-tr-full border p-2" style={{ borderColor: `${gold}66` }}>
-                    <div className="h-full w-full rounded-tr-full border border-dashed" style={{ borderColor: `${gold}44` }} />
-                  </div>
-                </motion.div>
-
-                {/* Center Brass Door Knocker & Guest Tag */}
-                <motion.div
-                  animate={isAnimating ? { opacity: 0, scale: 0.85 } : { opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative z-10 flex h-full flex-col items-center justify-center px-5 text-center"
-                >
-                  <div
-                    className="grid h-16 w-16 place-items-center rounded-full border-2 bg-black/35 shadow-lg"
-                    style={{ borderColor: gold, color: gold }}
-                  >
-                    <span className="font-display text-lg font-bold">{displayMonogram}</span>
-                  </div>
-                  <div
-                    className="mt-4 rounded-full border bg-black/45 px-4 py-1.5 font-ui text-[10px] font-semibold uppercase tracking-[0.2em] text-[#FFF8E7] backdrop-blur-sm"
-                    style={{ borderColor: `${gold}88` }}
-                  >
-                    For · {guestName}
-                  </div>
-                </motion.div>
+            {/* Right Carved Palace Door — swings inward in 3D */}
+            <motion.div
+              initial={false}
+              animate={
+                opened
+                  ? { x: "100%", rotateY: prefersReduced ? 0 : -88 }
+                  : { x: 0, rotateY: 0 }
+              }
+              style={{
+                borderColor: `${gold}AA`,
+                background: `linear-gradient(225deg, ${primary} 0%, #240A10 100%)`,
+                transformOrigin: "right center",
+                willChange: "transform",
+              }}
+              transition={{ duration: prefersReduced ? 0.15 : 0.9, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-y-0 right-0 w-1/2 border-l p-3"
+            >
+              <div className="h-full w-full rounded-tr-full border p-2" style={{ borderColor: `${gold}66` }}>
+                <div className="h-full w-full rounded-tr-full border border-dashed" style={{ borderColor: `${gold}44` }} />
               </div>
-              <span className="font-ui mt-5 inline-flex items-center gap-2 rounded-full bg-[#161412] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-white shadow-lg">
-                <Hand size={15} /> {ctaText}
-              </span>
-            </div>
-          )}
+            </motion.div>
 
-          {variant === "curtain-reveal" && (
-            <div className="flex flex-col items-center">
+            {/* Sliding Brass Bolt Handle in the center seam */}
+            <motion.div
+              animate={opened ? { opacity: 0, scale: 0.75, y: 24 } : { opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              className="relative z-10 flex h-full flex-col items-center justify-center px-5 text-center"
+            >
               <div
-                className="relative h-80 w-72 overflow-hidden rounded-3xl border bg-[#1B1715] shadow-2xl sm:w-80"
+                className="mb-3 rounded-full border bg-black/50 px-4 py-1.5 font-ui text-[10px] font-semibold uppercase tracking-[0.2em] text-[#FFF8E7]"
                 style={{ borderColor: `${gold}88` }}
               >
-                {/* Left Pleated Drape */}
-                <motion.div
-                  initial={{ x: 0, scaleX: 1 }}
-                  animate={isAnimating ? { x: "-100%", scaleX: 0.72 } : { x: 0, scaleX: 1 }}
-                  transition={{ duration: prefersReduced ? 0 : 0.88, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute inset-y-0 left-0 w-[52%] origin-left"
-                  style={{
-                    background: `repeating-linear-gradient(90deg, ${primary} 0px, ${primary} 14px, #1B090D 22px, ${primary} 30px)`,
-                  }}
-                />
-
-                {/* Right Pleated Drape */}
-                <motion.div
-                  initial={{ x: 0, scaleX: 1 }}
-                  animate={isAnimating ? { x: "100%", scaleX: 0.72 } : { x: 0, scaleX: 1 }}
-                  transition={{ duration: prefersReduced ? 0 : 0.88, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute inset-y-0 right-0 w-[52%] origin-right"
-                  style={{
-                    background: `repeating-linear-gradient(90deg, ${primary} 0px, #1B090D 10px, ${primary} 22px, ${primary} 30px)`,
-                  }}
-                />
-
-                {/* Valance & Center Medallion */}
-                <div
-                  className="absolute inset-x-0 top-0 h-4 border-b"
-                  style={{ background: gold, borderColor: "#FFFDF6" }}
-                />
-                <motion.div
-                  animate={isAnimating ? { opacity: 0, y: -12 } : { opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative z-10 flex h-full flex-col items-center justify-center px-5 text-center"
-                >
-                  <div
-                    className="grid h-16 w-16 place-items-center rounded-full border-2 bg-black/40 backdrop-blur-sm"
-                    style={{ borderColor: gold, color: gold }}
-                  >
-                    <span className="font-display text-lg font-bold">{displayMonogram}</span>
-                  </div>
-                  <p className="font-ui mt-4 rounded-full bg-black/45 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white backdrop-blur-sm">
-                    For · {guestName}
-                  </p>
-                </motion.div>
+                For · {guestName}
               </div>
-              <span className="font-ui mt-5 inline-flex items-center gap-2 rounded-full bg-[#161412] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-white shadow-lg">
-                <Hand size={15} /> {ctaText}
-              </span>
-            </div>
-          )}
-        </button>
+
+              <div className="relative flex h-32 w-16 flex-col items-center rounded-full border bg-black/45 p-1.5" style={{ borderColor: `${gold}77` }}>
+                <motion.button
+                  type="button"
+                  drag={prefersReduced || opened ? false : "y"}
+                  dragConstraints={{ top: 0, bottom: 68 }}
+                  dragElastic={0.12}
+                  style={{ y: boltY, touchAction: "none", borderColor: gold, color: gold }}
+                  onDragEnd={(_, info) => {
+                    if (info.offset.y > 40) triggerOpen();
+                  }}
+                  onClick={triggerOpen}
+                  aria-label={ctaText}
+                  tabIndex={opened ? -1 : 0}
+                  whileHover={!opened && !prefersReduced ? { scale: 1.07 } : undefined}
+                  className="grid h-14 w-12 place-items-center rounded-full border-2 bg-[#161412] shadow-xl"
+                >
+                  <span className="font-display text-sm font-bold">{displayMonogram}</span>
+                </motion.button>
+                <ChevronDown size={14} className="mt-auto mb-1 animate-bounce text-white/75" />
+              </div>
+            </motion.div>
+          </div>
+          <p className="font-ui mt-4 rounded-full bg-[#161412] px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-lg">
+            {ctaText}
+          </p>
+        </motion.div>
+      )}
+
+      {variant === "curtain-reveal" && (
+        <motion.div
+          initial={false}
+          animate={{ opacity: opened ? 0 : 1 }}
+          transition={{ duration: 0.45, delay: opened ? 0.55 : 0 }}
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-5"
+          style={{ pointerEvents: opened ? "none" : "auto", willChange: "opacity" }}
+        >
+          <div
+            className="relative h-[440px] w-full max-w-sm overflow-hidden rounded-[2rem] border bg-transparent shadow-2xl"
+            style={{ borderColor: `${gold}88` }}
+          >
+            {/* Left Velvet Curtain */}
+            <motion.div
+              initial={false}
+              animate={
+                opened
+                  ? { x: "-100%", scaleX: 0.58 }
+                  : { x: 0, scaleX: 1 }
+              }
+              style={{
+                x: opened ? undefined : curtainPeek ? undefined : 0,
+                background: `repeating-linear-gradient(90deg, ${primary} 0px, ${primary} 14px, #1B090D 22px, ${primary} 30px)`,
+                willChange: "transform",
+              }}
+              transition={{ duration: prefersReduced ? 0.15 : 0.92, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-y-0 left-0 w-[52%] origin-left"
+            />
+            {/* Right Velvet Curtain */}
+            <motion.div
+              initial={false}
+              animate={
+                opened
+                  ? { x: "100%", scaleX: 0.58 }
+                  : { x: 0, scaleX: 1 }
+              }
+              style={{
+                background: `repeating-linear-gradient(90deg, ${primary} 0px, #1B090D 10px, ${primary} 22px, ${primary} 30px)`,
+                willChange: "transform",
+              }}
+              transition={{ duration: prefersReduced ? 0.15 : 0.92, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-y-0 right-0 w-[52%] origin-right"
+            />
+            <div
+              className="absolute inset-x-0 top-0 h-4 border-b"
+              style={{ background: gold, borderColor: "#FFFDF6" }}
+            />
+
+            {/* Pullable Golden Drawcord & Crest */}
+            <motion.div
+              animate={opened ? { opacity: 0, y: -20 } : { opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="relative z-10 flex h-full flex-col items-center justify-center px-5 text-center"
+            >
+              <p className="font-ui rounded-full bg-black/55 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white">
+                For · {guestName}
+              </p>
+
+              <motion.button
+                type="button"
+                drag={prefersReduced || opened ? false : "y"}
+                dragConstraints={{ top: 0, bottom: 80 }}
+                dragElastic={0.18}
+                style={{ y: cordY, touchAction: "none" }}
+                onDragEnd={(_, info) => {
+                  if (info.offset.y > 42) triggerOpen();
+                }}
+                onClick={triggerOpen}
+                aria-label={ctaText}
+                tabIndex={opened ? -1 : 0}
+                className="mt-4 flex flex-col items-center outline-none"
+              >
+                <span className="block h-12 w-1 rounded-full" style={{ background: gold }} />
+                <span
+                  className="grid h-14 w-14 place-items-center rounded-full border-2 bg-black/60 font-display text-lg font-bold shadow-xl"
+                  style={{ borderColor: gold, color: gold }}
+                >
+                  {displayMonogram}
+                </span>
+                <span className="mt-1 flex gap-0.5" aria-hidden="true">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <span key={i} className="h-4 w-1 rounded-full" style={{ background: gold }} />
+                  ))}
+                </span>
+              </motion.button>
+            </motion.div>
+          </div>
+          <p className="font-ui mt-4 rounded-full bg-[#161412] px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-lg">
+            {ctaText}
+          </p>
+        </motion.div>
       )}
     </div>
   );
 }
+
+const EnvelopeGate = memo(EnvelopeGateComponent);
+export default EnvelopeGate;

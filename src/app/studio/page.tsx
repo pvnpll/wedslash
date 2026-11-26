@@ -357,13 +357,18 @@ function StudioInner() {
                     <div className="grid grid-cols-2 gap-2">
                       {(
                         [
-                          ["velvet-book", "3D Velvet Book"],
-                          ["ring-box", "Ring Box"],
-                          ["diya-lamp", "Diya Lamp"],
-                          ["wax-envelope", "Wax Envelope"],
-                          ["palace-doors", "Palace Doors"],
-                          ["boarding-pass", "Boarding Pass"],
-                          ["curtain-reveal", "Curtain Reveal"],
+                          ["velvet-book", "Swipe · 3D Book"],
+                          ["biometric-bloom", "Hold · Heartbeat"],
+                          ["constellation-trace", "Draw · Connect Stars"],
+                          ["mandala-dial", "Spin · Mandala Dial"],
+                          ["tear-perforation", "Rip · Foil Strip"],
+                          ["frost-wipe", "Wipe · Lake Mist"],
+                          ["diya-lamp", "Spark · Diya Lamp"],
+                          ["ring-box", "Slide · Ring Box"],
+                          ["wax-envelope", "Peel · Wax Envelope"],
+                          ["palace-doors", "Unbolt · Palace Doors"],
+                          ["curtain-reveal", "Pull · Velvet Curtains"],
+                          ["boarding-pass", "Runway · Boarding Pass"],
                         ] as [EntryType, string][]
                       ).map(([val, label]) => (
                         <button

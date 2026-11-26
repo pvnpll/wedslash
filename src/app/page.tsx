@@ -6,18 +6,23 @@ import {
   BookOpen,
   Hand,
   Sparkles,
-  Users,
-  Globe,
   MousePointerClick,
   Star,
   Check,
-  Camera,
-  Plane,
   Flower2,
+  Fingerprint,
+  Droplets,
+  RotateCw,
+  Scissors,
 } from "lucide-react";
 import { TEMPLATES } from "@/lib/templates";
 import TemplateCard from "@/components/TemplateCard";
 import BookGate from "@/components/mechanics/BookGate";
+import BiometricBloomGate from "@/components/mechanics/BiometricBloomGate";
+import ConstellationGate from "@/components/mechanics/ConstellationGate";
+import MandalaDialGate from "@/components/mechanics/MandalaDialGate";
+import FrostWipeGate from "@/components/mechanics/FrostWipeGate";
+import TearPerforationGate from "@/components/mechanics/TearPerforationGate";
 import TasselScroll from "@/components/mechanics/TasselScroll";
 import ScratchCard from "@/components/mechanics/ScratchCard";
 import BrushPetalsReveal from "@/components/mechanics/BrushPetalsReveal";
@@ -26,18 +31,23 @@ import BoardingPass from "@/components/mechanics/BoardingPass";
 import ParticleCanvas from "@/components/ParticleCanvas";
 
 const HERO_DEMOS = [
-  { id: "book", label: "3D Book", hint: "Tap the velvet cover to open" },
-  { id: "tassel", label: "Tassel", hint: "Pull or tap the silk tassel" },
+  { id: "bloom", label: "Hold Lock", hint: "Press & hold the seal for 1s to bloom" },
+  { id: "stars", label: "Draw Stars", hint: "Connect all 4 stars in the night sky" },
+  { id: "dial", label: "Spin Dial", hint: "Twist the brass mandala clockwise" },
+  { id: "frost", label: "Wipe Mist", hint: "Rub lake mist off frosted glass" },
+  { id: "tear", label: "Rip Foil", hint: "Zip horizontally across the foil strip" },
+  { id: "book", label: "Swipe Book", hint: "Swipe left or tap to turn cover" },
+  { id: "tassel", label: "Tassel", hint: "Pull the silk tassel down" },
   { id: "scratch", label: "Scratch", hint: "Scratch the 3 gold foil circles" },
-  { id: "petals", label: "Petals", hint: "Brush petals aside to uncover the date" },
-  { id: "polaroid", label: "Polaroid", hint: "Tap to develop the instant film" },
-  { id: "boarding", label: "Boarding", hint: "Flip between ticket & passport stamp" },
+  { id: "petals", label: "Petals", hint: "Brush petals aside to reveal" },
+  { id: "polaroid", label: "Polaroid", hint: "Tap to develop vintage film" },
+  { id: "boarding", label: "Boarding", hint: "Slide jet or flip to passport" },
 ] as const;
 
 type HeroDemoId = (typeof HERO_DEMOS)[number]["id"];
 
 export default function Home() {
-  const [heroDemo, setHeroDemo] = useState<HeroDemoId>("book");
+  const [heroDemo, setHeroDemo] = useState<HeroDemoId>("bloom");
   const featured = TEMPLATES.slice(0, 6);
   const currentDemoMeta =
     HERO_DEMOS.find((d) => d.id === heroDemo) ?? HERO_DEMOS[0];
@@ -54,12 +64,12 @@ export default function Home() {
             <h1 className="font-display mt-5 text-5xl font-bold leading-[1.04] tracking-tight sm:text-6xl lg:text-[4.4rem]">
               Invitations your guests{" "}
               <em className="gold-text not-italic font-bold">
-                open, tap &amp; pull
+                hold, trace, wipe &amp; spin
               </em>{" "}
               — not just read.
             </h1>
             <p className="mt-5 max-w-lg text-[17px] leading-relaxed text-[#6E655F]">
-              Wedslash turns weddings into cinematic phone experiences — a 3D velvet book that swings open, a tassel you pull to reveal the date, foil you scratch, petals you brush away. One link, unlimited guests, live RSVPs.
+              Wedslash turns celebrations into unforgettable tactile rituals — hold a glowing heartbeat seal, trace stars across midnight, twist a brass mandala aperture, wipe lake mist off crystal glass, or rip a metallic foil strip.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
@@ -132,6 +142,43 @@ export default function Home() {
                 className="pointer-events-none absolute left-1/2 top-2.5 z-30 h-5 w-24 -translate-x-1/2 rounded-full bg-[#161412]"
                 aria-hidden="true"
               />
+              {heroDemo === "bloom" && (
+                <BiometricBloomGate
+                  groom="Arjun"
+                  bride="Priya"
+                  monogram="A · P"
+                  guestName="You ♡"
+                />
+              )}
+              {heroDemo === "stars" && (
+                <ConstellationGate
+                  groom="Arjun"
+                  bride="Priya"
+                  guestName="You ♡"
+                />
+              )}
+              {heroDemo === "dial" && (
+                <MandalaDialGate
+                  groom="Zohan"
+                  bride="Amira"
+                  monogram="Z · A"
+                  guestName="You ♡"
+                />
+              )}
+              {heroDemo === "frost" && (
+                <FrostWipeGate
+                  groom="Luca"
+                  bride="Maya"
+                  guestName="You ♡"
+                />
+              )}
+              {heroDemo === "tear" && (
+                <TearPerforationGate
+                  groom="Matteo"
+                  bride="Elena"
+                  guestName="You ♡"
+                />
+              )}
               {heroDemo === "book" && (
                 <BookGate
                   groom="Arjun"
@@ -235,44 +282,44 @@ export default function Home() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
+                icon: Fingerprint,
+                t: "Heartbeat Hold Lock",
+                d: "Hold the dual seal for 1s as sonar pulses converge and burst open via a golden sunburst.",
+              },
+              {
+                icon: Star,
+                t: "Trace the Constellation",
+                d: "Draw a silk thread across 4 glowing night-sky stars to unveil the invitation.",
+              },
+              {
+                icon: RotateCw,
+                t: "Brass Mandala Aperture",
+                d: "Twist the concentric geometric dial 180° clockwise to open a temple camera iris.",
+              },
+              {
+                icon: Droplets,
+                t: "Morning Lake Mist Wipe",
+                d: "Rub off translucent condensation from a frosted window straight onto the live invite.",
+              },
+              {
+                icon: Scissors,
+                t: "Perforated Foil Rip",
+                d: "Zip horizontally across the metallic magazine strip to tear off the couture seal.",
+              },
+              {
                 icon: BookOpen,
-                t: "3D Velvet Book Open",
-                d: "Wine-velvet hardcover with cultural SVG emblem swings open in 3D as petals fall and music fades up.",
+                t: "Swipe-Turn 3D Book",
+                d: "Swipe the velvet cover smoothly in 3D without snappy swaps as the inner arch spread illuminates.",
               },
               {
                 icon: Hand,
-                t: "Pull-the-Tassel Scroll",
-                d: "Drag the silk tassel down a golden rod — parchment unrolls to reveal your date with confetti.",
-              },
-              {
-                icon: Sparkles,
-                t: "Scratch-to-Reveal Foil",
-                d: "Three metallic circles or a golden heart guests scratch with a finger to uncover Day · Month · Year.",
+                t: "Pull, Spark & Slide Gestures",
+                d: "Drag sparks to light a brass diya, slide a jewelry clasp, pull velvet cords, or unbolt palace doors.",
               },
               {
                 icon: Flower2,
-                t: "Brush-the-Petals",
-                d: "Interactive rose or marigold petals cover the date — guests brush them away to uncover what's beneath.",
-              },
-              {
-                icon: Camera,
-                t: "Polaroid Tap-to-Develop",
-                d: "Vintage instant film starts dark, flashes on tap, and develops cleanly into your date & venue.",
-              },
-              {
-                icon: Plane,
-                t: "Boarding Pass & Passport",
-                d: "Flippable airline ticket with perforated stub, spinning compass rose, and takeoff countdown.",
-              },
-              {
-                icon: Users,
-                t: "Personalized Guest Links",
-                d: "?guest=The+Sharma+Family greets every guest by name on the cover and pre-fills their RSVP.",
-              },
-              {
-                icon: Globe,
-                t: "One Link · Any Language",
-                d: "English, Hindi, Hinglish, Arabic, French, Spanish. No app needed — link, QR, or Netlify ZIP.",
+                t: "Petals, Scratch & Polaroid",
+                d: "Brush petals aside, scratch foil circles, develop film, or launch the boarding-pass jet — in 6 languages.",
               },
             ].map((m) => (
               <div
@@ -305,7 +352,7 @@ export default function Home() {
             href="/templates"
             className="font-ui inline-flex items-center gap-1.5 rounded-full border hairline bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-[0.12em]"
           >
-            View all 16 <ArrowRight size={14} />
+            View all {TEMPLATES.length} <ArrowRight size={14} />
           </Link>
         </div>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
