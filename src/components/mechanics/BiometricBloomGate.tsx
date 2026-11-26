@@ -1,6 +1,6 @@
 "use client";
 import { memo, useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Fingerprint, Heart } from "lucide-react";
 import GateRevealedCard from "./GateRevealedCard";
 
@@ -20,9 +20,9 @@ const RING_RADIUS = 54;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 /**
- * Hold-Together Heartbeat Lock: guest presses & holds (~1.15s) to fuse two
- * interlocking crests as concentric sonar ripples tighten and bloom via an
- * expanding radial sunburst clip-path into the revealed card.
+ * Hold-Together Heartbeat Lock with silky AnimatePresence sonar ripples,
+ * elastic crest convergence, smooth early-release feedback crossfade,
+ * and wide desktop radial sunburst reveal.
  */
 function BiometricBloomGateComponent({
   groom,
@@ -121,7 +121,7 @@ function BiometricBloomGateComponent({
 
   return (
     <div
-      className="relative flex h-full min-h-[600px] w-full flex-col items-center justify-center overflow-hidden px-5 py-8"
+      className="relative flex h-full min-h-[min(580px,82dvh)] @2xl:min-h-[620px] w-full flex-col items-center justify-center overflow-hidden px-4 py-8 @2xl:px-10"
       style={{
         background: `radial-gradient(circle at 50% 42%, ${gold}22 0%, transparent 62%), #FDF8EF`,
       }}
@@ -135,10 +135,10 @@ function BiometricBloomGateComponent({
             : { clipPath: "circle(0% at 50% 48%)", opacity: 0 }
         }
         transition={{ duration: prefersReduced ? 0.2 : 0.88, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute inset-0 z-10 flex items-center justify-center px-5"
+        className="absolute inset-0 z-10 flex items-center justify-center px-4 @2xl:px-10"
         style={{ pointerEvents: unlocked ? "auto" : "none", background: "#FDF8EF" }}
       >
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-md @2xl:max-w-2xl @4xl:max-w-3xl">
           <GateRevealedCard
             guestName={guestName}
             headline={headline}
@@ -146,12 +146,15 @@ function BiometricBloomGateComponent({
             primary={primary}
             gold={gold}
             keepsake={
-              <span
-                className="grid h-12 w-12 place-items-center rounded-full border-2 shadow-sm"
+              <motion.span
+                initial={false}
+                animate={unlocked && !prefersReduced ? { scale: [0.7, 1.15, 1] } : { scale: 1 }}
+                transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+                className="grid h-14 w-14 @2xl:h-20 @2xl:w-20 place-items-center rounded-full border-2 shadow-sm"
                 style={{ borderColor: gold, background: `${primary}14`, color: primary }}
               >
-                <Heart size={20} fill={primary} />
-              </span>
+                <Heart size={22} className="@2xl:scale-125" fill={primary} />
+              </motion.span>
             }
             revealed={unlocked}
             delay={0.18}
@@ -174,30 +177,28 @@ function BiometricBloomGateComponent({
           Private Keepsake · {guestName}
         </div>
 
-        {/* Interlocking crests that fuse together while holding */}
-        <div className="mt-5 flex items-center justify-center gap-1 font-display text-2xl font-bold" style={{ color: primary }}>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-1 font-display text-2xl sm:text-3xl font-bold" style={{ color: primary }}>
           <span
             style={{
               transform: `translate3d(-${convergence}px, 0, 0)`,
-              transition: holding ? "none" : "transform 300ms ease",
+              transition: holding ? "none" : "transform 350ms cubic-bezier(0.22,1,0.36,1)",
             }}
           >
             {groom || "Bride"}
           </span>
-          <span className="font-script mx-1.5 text-3xl" style={{ color: gold }}>
+          <span className="font-script mx-1.5 text-3xl sm:text-4xl" style={{ color: gold }}>
             &amp;
           </span>
           <span
             style={{
               transform: `translate3d(${convergence}px, 0, 0)`,
-              transition: holding ? "none" : "transform 300ms ease",
+              transition: holding ? "none" : "transform 350ms cubic-bezier(0.22,1,0.36,1)",
             }}
           >
             {bride || "Groom"}
           </span>
         </div>
 
-        {/* Hold Sensor Ring */}
         <button
           type="button"
           onPointerDown={(e) => {
@@ -220,27 +221,23 @@ function BiometricBloomGateComponent({
           className="relative mt-6 grid h-36 w-36 select-none place-items-center rounded-full outline-none"
           style={{ touchAction: "none" }}
         >
-          {/* Expanding sonar pulse while holding */}
-          {holding && !prefersReduced && (
-            <motion.span
-              animate={{ scale: [1, 1.55], opacity: [0.55, 0] }}
-              transition={{ repeat: Infinity, duration: 0.75, ease: "easeOut" }}
-              className="pointer-events-none absolute inset-2 rounded-full border-2"
-              style={{ borderColor: gold }}
-              aria-hidden="true"
-            />
-          )}
+          <AnimatePresence>
+            {holding && !prefersReduced && (
+              <motion.span
+                key="sonar-ring"
+                initial={{ scale: 0.92, opacity: 0 }}
+                animate={{ scale: [1, 1.6], opacity: [0.55, 0] }}
+                exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                transition={{ repeat: Infinity, duration: 0.78, ease: "easeOut" }}
+                className="pointer-events-none absolute inset-2 rounded-full border-2"
+                style={{ borderColor: gold }}
+                aria-hidden="true"
+              />
+            )}
+          </AnimatePresence>
 
-          {/* Circular Progress SVG */}
           <svg viewBox="0 0 128 128" className="h-36 w-36 -rotate-90" aria-hidden="true">
-            <circle
-              cx="64"
-              cy="64"
-              r={RING_RADIUS}
-              stroke={`${gold}33`}
-              strokeWidth="5"
-              fill="none"
-            />
+            <circle cx="64" cy="64" r={RING_RADIUS} stroke={`${gold}33`} strokeWidth="5" fill="none" />
             <circle
               cx="64"
               cy="64"
@@ -270,9 +267,20 @@ function BiometricBloomGateComponent({
           </motion.span>
         </button>
 
-        <p className="font-ui mt-5 rounded-full bg-[#161412] px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-white shadow-lg">
-          {releasedEarly ? "Hold continuously until ring completes" : cta}
-        </p>
+        <div className="mt-5 min-h-[38px]">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={releasedEarly ? "early" : "prompt"}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18 }}
+              className="font-ui rounded-full bg-[#161412] px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-white shadow-lg"
+            >
+              {releasedEarly ? "Hold continuously until ring completes" : cta}
+            </motion.p>
+          </AnimatePresence>
+        </div>
       </motion.div>
     </div>
   );

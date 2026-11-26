@@ -1,6 +1,6 @@
 "use client";
 import { memo, useState } from "react";
-import { motion, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import { ChevronUp, Gem } from "lucide-react";
 import GateRevealedCard from "./GateRevealedCard";
 
@@ -16,9 +16,9 @@ export interface RingBoxGateProps {
 }
 
 /**
- * Spring-Loaded Jewelry Ring Box Gate: slide the golden clasp UP (or tap)
- * to pop the lid open in 3D while the diamond keepsake rises directly
- * into the revealed invitation crest with zero abrupt unmount pop.
+ * Spring-Loaded Jewelry Ring Box Gate: slide the golden clasp UP (with real-time
+ * lid peeking + spring snapback if released early) to pop open into a wide desktop
+ * or full-bleed mobile keepsake reveal.
  */
 function RingBoxGateComponent({
   groom,
@@ -34,7 +34,8 @@ function RingBoxGateComponent({
   const [opened, setOpened] = useState(false);
 
   const claspY = useMotionValue(0);
-  const lidPeekRotate = useTransform(claspY, [-52, 0], [-28, 0]);
+  const smoothClaspY = useSpring(claspY, { stiffness: 320, damping: 28 });
+  const lidPeekRotate = useTransform(smoothClaspY, [-52, 0], [-36, 0]);
 
   const headline =
     groom && bride ? `${groom} & ${bride}` : groom || bride || "Together in Celebration";
@@ -55,34 +56,33 @@ function RingBoxGateComponent({
       initial={false}
       animate={
         opened && !prefersReduced
-          ? { scale: [0.7, 1.12, 1], y: [14, -4, 0] }
+          ? { scale: [0.72, 1.12, 1], y: [14, -4, 0] }
           : { scale: 1, y: 0 }
       }
-      transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-      className="relative grid h-16 w-16 place-items-center rounded-full border-2 shadow-md"
+      transition={{ duration: 0.78, ease: [0.22, 1, 0.36, 1] }}
+      className="relative grid h-16 w-16 @2xl:h-24 @2xl:w-24 place-items-center rounded-full border-2 shadow-md"
       style={{
         borderColor: `${gold}88`,
         background: `radial-gradient(circle, ${gold}28 0%, ${primary}14 100%)`,
       }}
     >
       <div
-        className="absolute inset-x-3.5 bottom-2 h-8 rounded-b-full border-2 border-t-0"
+        className="absolute inset-x-3.5 bottom-2 h-8 @2xl:inset-x-5 @2xl:bottom-3 @2xl:h-11 rounded-b-full border-2 border-t-0"
         style={{ borderColor: gold }}
       />
-      <Gem size={24} style={{ color: gold }} className="relative -mt-2" />
+      <Gem size={24} style={{ color: gold }} className="relative -mt-2 @2xl:scale-125" />
     </motion.div>
   );
 
   return (
     <div
-      className="relative flex h-full min-h-[600px] w-full flex-col items-center justify-center overflow-hidden px-5 py-8"
+      className="relative flex h-full min-h-[min(580px,82dvh)] @2xl:min-h-[620px] w-full flex-col items-center justify-center overflow-hidden px-4 py-8 @2xl:px-10"
       style={{
         background: `radial-gradient(circle at 50% 35%, ${primary}22 0%, transparent 60%), linear-gradient(180deg, #FAF3E3 0%, #F3E7CF 100%)`,
         perspective: 1200,
       }}
     >
-      {/* Revealed Invitation Card blooming from the ring box cushion */}
-      <div className="relative z-10 w-full max-w-sm">
+      <div className="relative z-10 w-full max-w-md @2xl:max-w-2xl @4xl:max-w-3xl">
         <GateRevealedCard
           guestName={guestName}
           headline={headline}
@@ -92,31 +92,33 @@ function RingBoxGateComponent({
           gold={gold}
           keepsake={ringKeepsake}
           revealed={opened}
-          delay={0.28}
+          delay={0.26}
         />
       </div>
 
-      {/* Ring Box Gate Overlay — Lid opens in 3D, ring rises, then box smoothly recedes down */}
+      {/* Ring Box Gate Overlay */}
       <motion.div
         initial={false}
         animate={
           opened
-            ? { y: prefersReduced ? 0 : 70, scale: 0.92, opacity: 0 }
+            ? { y: prefersReduced ? 0 : 72, scale: 0.92, opacity: 0 }
             : { y: 0, scale: 1, opacity: 1 }
         }
         transition={{
           duration: prefersReduced ? 0.15 : 0.72,
-          delay: opened ? 0.42 : 0,
+          delay: opened ? 0.38 : 0,
           ease: [0.22, 1, 0.36, 1],
         }}
-        className="absolute inset-0 z-20 flex flex-col items-center justify-center px-5"
+        className="absolute inset-0 z-20 flex flex-col items-center justify-center px-4"
         style={{
           pointerEvents: opened ? "none" : "auto",
           willChange: "transform, opacity",
         }}
       >
-        <div className="relative flex flex-col items-center" style={{ transformStyle: "preserve-3d" }}>
-          {/* Sunburst glow when lid opens */}
+        <div
+          className="relative flex w-full max-w-[260px] sm:max-w-[290px] @2xl:max-w-[340px] flex-col items-center"
+          style={{ transformStyle: "preserve-3d" }}
+        >
           <motion.div
             initial={false}
             animate={
@@ -130,7 +132,6 @@ function RingBoxGateComponent({
             aria-hidden="true"
           />
 
-          {/* Hinged Velvet Lid */}
           <motion.div
             initial={false}
             animate={opened ? { rotateX: prefersReduced ? 0 : -115 } : undefined}
@@ -141,7 +142,7 @@ function RingBoxGateComponent({
               border: `1.5px solid ${gold}77`,
             }}
             transition={{ duration: prefersReduced ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-20 mx-auto h-16 w-56 origin-top rounded-t-2xl border-b-0 shadow-xl"
+            className="relative z-20 mx-auto h-16 w-[92%] origin-top rounded-t-2xl border-b-0 shadow-xl"
           >
             <div
               className="absolute inset-x-8 top-2.5 h-2 rounded-full"
@@ -152,11 +153,12 @@ function RingBoxGateComponent({
             </p>
           </motion.div>
 
-          {/* Clasp Latch — Drag UP to pop open */}
           <motion.button
             type="button"
             drag={prefersReduced || opened ? false : "y"}
             dragConstraints={{ top: -52, bottom: 0 }}
+            dragSnapToOrigin
+            dragTransition={{ bounceStiffness: 340, bounceDamping: 26 }}
             dragElastic={0.14}
             style={{ y: claspY, touchAction: "none", borderColor: gold }}
             onDragEnd={(_, info) => {
@@ -166,14 +168,13 @@ function RingBoxGateComponent({
             aria-label={cta}
             tabIndex={opened ? -1 : 0}
             whileHover={!opened && !prefersReduced ? { scale: 1.08 } : undefined}
-            className="relative z-30 -my-3 grid h-10 w-10 place-items-center rounded-full border-2 bg-[#161412] text-white shadow-xl"
+            className="relative z-30 -my-3 grid h-11 w-11 place-items-center rounded-full border-2 bg-[#161412] text-white shadow-xl"
           >
             <ChevronUp size={16} style={{ color: gold }} />
           </motion.button>
 
-          {/* Velvet Box Base */}
           <div
-            className="relative z-10 mx-auto w-60 rounded-b-2xl px-5 pb-6 pt-5 text-center shadow-2xl"
+            className="relative z-10 mx-auto w-full rounded-b-2xl px-4 pb-6 pt-5 text-center shadow-2xl"
             style={{ background: `linear-gradient(180deg, ${primary}EE, #1D1515)`, border: `1.5px solid ${gold}55` }}
           >
             <div
@@ -182,7 +183,7 @@ function RingBoxGateComponent({
             >
               For · {guestName}
             </div>
-            <p className="font-display mt-2 text-xl font-bold text-white">{headline}</p>
+            <p className="font-display mt-2 break-words text-xl font-bold text-white">{headline}</p>
           </div>
         </div>
 

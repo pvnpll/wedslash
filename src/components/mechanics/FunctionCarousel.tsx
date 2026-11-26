@@ -39,7 +39,7 @@ function FunctionCarouselComponent({
         ];
 
   return (
-    <div className="mx-auto w-full max-w-lg px-4">
+    <div className="mx-auto w-full max-w-lg @2xl:max-w-4xl px-3 sm:px-4">
       <p className="text-center font-ui text-[11px] font-semibold uppercase tracking-[0.28em] text-[#6E655F]">
         {heading}
       </p>
@@ -49,14 +49,14 @@ function FunctionCarouselComponent({
 
       {/* 3D Coverflow Stage — Pure GPU transform & opacity (no filter: blur) */}
       <div
-        className="relative mt-4 flex h-[410px] items-center justify-center overflow-hidden"
+        className="relative mt-4 flex h-[410px] @2xl:h-[430px] items-center justify-center overflow-hidden"
         style={{ perspective: 1200 }}
       >
         {visibleSlots.map(({ item: f, offset }) => {
           const isCenter = offset === 0;
-          const targetX = offset === 0 ? "0%" : offset < 0 ? "-54%" : "54%";
-          const targetRotateY = prefersReduced ? 0 : offset * -18;
-          const targetScale = isCenter ? 1 : 0.85;
+          const targetX = offset === 0 ? "0%" : offset < 0 ? "-64%" : "64%";
+          const targetRotateY = prefersReduced ? 0 : offset * -16;
+          const targetScale = isCenter ? 1 : 0.86;
 
           return (
             <motion.article
@@ -66,21 +66,22 @@ function FunctionCarouselComponent({
                 x: targetX,
                 scale: targetScale,
                 rotateY: targetRotateY,
-                opacity: isCenter ? 1 : 0.58,
+                opacity: isCenter ? 1 : 0.64,
                 zIndex: isCenter ? 20 : 10,
               }}
               transition={
                 prefersReduced
                   ? { duration: 0.15 }
-                  : { type: "spring", stiffness: 260, damping: 28 }
+                  : { type: "spring", stiffness: 280, damping: 28 }
               }
               drag={isCenter && total > 1 ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.45}
+              dragElastic={0.42}
+              dragSnapToOrigin
               onDragEnd={(_, info) => {
                 if (!isCenter || total <= 1) return;
-                if (info.offset.x < -50) go(1);
-                else if (info.offset.x > 50) go(-1);
+                if (info.offset.x < -50 || info.velocity.x < -300) go(1);
+                else if (info.offset.x > 50 || info.velocity.x > 300) go(-1);
               }}
               onClick={!isCenter ? () => go(offset) : undefined}
               style={{
@@ -88,7 +89,7 @@ function FunctionCarouselComponent({
                 transformStyle: "preserve-3d",
                 willChange: "transform, opacity",
               }}
-              className={`absolute w-[82%] max-w-[330px] overflow-hidden rounded-3xl bg-white shadow-[0_24px_50px_-20px_rgba(22,20,18,0.38)] ring-1 ring-black/8 ${
+              className={`absolute w-[84%] max-w-[310px] @2xl:w-[340px] @2xl:max-w-[340px] overflow-hidden rounded-3xl bg-white shadow-[0_24px_50px_-20px_rgba(22,20,18,0.38)] ring-1 ring-black/8 ${
                 isCenter
                   ? "cursor-grab active:cursor-grabbing"
                   : "cursor-pointer select-none"

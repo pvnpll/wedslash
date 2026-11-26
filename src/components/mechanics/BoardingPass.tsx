@@ -30,6 +30,11 @@ function formatDateBadge(targetDate?: string): string {
   return `${dd} · ${mm} · ${yy}`;
 }
 
+/**
+ * Container-responsive 3D Boarding Pass <-> Marriage Passport flip card:
+ * fits cleanly inside 320px–390px mobile modals while expanding to a wide
+ * luxury ticket spread (`@2xl:max-w-2xl`) on desktop screens.
+ */
 function BoardingPassComponent({
   guestName,
   groom,
@@ -70,18 +75,28 @@ function BoardingPassComponent({
   const hasValidTarget = Boolean(targetDate && !Number.isNaN(Date.parse(targetDate)));
 
   return (
-    <div className="mx-auto w-full max-w-md px-4" style={{ perspective: 1400 }}>
+    <div
+      className={`mx-auto w-full px-3 sm:px-4 ${
+        compact ? "max-w-md" : "max-w-md @2xl:max-w-2xl"
+      }`}
+      style={{ perspective: 1500 }}
+    >
       <motion.div
-        initial={prefersReduced ? false : { opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0, rotateY: prefersReduced ? 0 : flipped ? 180 : 0 }}
-        transition={{ duration: prefersReduced ? 0 : 0.72, ease: [0.22, 1, 0.36, 1] }}
-        style={{ transformStyle: "preserve-3d" }}
+        initial={false}
+        animate={{ rotateY: prefersReduced ? 0 : flipped ? 180 : 0 }}
+        transition={{
+          type: prefersReduced ? "tween" : "spring",
+          stiffness: 165,
+          damping: 22,
+          duration: prefersReduced ? 0.18 : undefined,
+        }}
+        style={{ transformStyle: "preserve-3d", willChange: "transform" }}
         className="relative grid"
       >
         {/* FRONT: Boarding Pass */}
         <div
           aria-hidden={flipped}
-          className={`col-start-1 row-start-1 overflow-hidden rounded-3xl text-white shadow-2xl ring-1 ring-white/15 ${
+          className={`col-start-1 row-start-1 overflow-hidden rounded-3xl text-white shadow-2xl ring-1 ring-white/15 transition-opacity duration-200 ${
             flipped ? "pointer-events-none" : ""
           }`}
           style={{
@@ -90,23 +105,27 @@ function BoardingPassComponent({
             opacity: prefersReduced && flipped ? 0 : 1,
           }}
         >
-          <div className="flex items-center justify-between bg-white/5 px-5 py-3">
-            <span className="font-ui flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: gold }}>
-              <Plane size={15} /> {flightTitle}
+          <div className="flex items-center justify-between gap-2 bg-white/5 px-4 sm:px-6 py-3">
+            <span
+              className="font-ui flex min-w-0 flex-1 items-center gap-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] sm:tracking-[0.2em]"
+              style={{ color: gold }}
+            >
+              <Plane size={14} className="shrink-0" />
+              <span className="truncate">{flightTitle}</span>
             </span>
             <button
               type="button"
               onClick={toggleFlip}
-              className="font-ui inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white transition hover:bg-white/20"
+              className="font-ui inline-flex shrink-0 items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white transition-colors hover:bg-white/20"
             >
               <RotateCw size={11} /> Passport
             </button>
           </div>
 
-          <div className={`grid grid-cols-3 gap-2 px-5 ${compact ? "py-4" : "py-5"} text-center`}>
-            <div>
-              <p className="font-display text-3xl font-bold uppercase">{departureCode}</p>
-              <p className="font-ui mt-0.5 text-[10px] uppercase tracking-widest text-white/65">
+          <div className={`grid grid-cols-3 gap-2 px-4 sm:px-6 ${compact ? "py-4" : "py-5 @2xl:py-7"} text-center`}>
+            <div className="min-w-0">
+              <p className="font-display text-2xl sm:text-3xl @2xl:text-4xl font-bold uppercase">{departureCode}</p>
+              <p className="font-ui mt-0.5 truncate text-[10px] uppercase tracking-widest text-white/65">
                 {departureCity}
               </p>
             </div>
@@ -125,53 +144,53 @@ function BoardingPassComponent({
                 <motion.button
                   type="button"
                   drag={prefersReduced || flipped ? false : "x"}
-                  dragConstraints={{ left: -24, right: 34 }}
+                  dragConstraints={{ left: -16, right: 26 }}
                   dragSnapToOrigin
+                  dragTransition={{ bounceStiffness: 340, bounceDamping: 26 }}
                   dragElastic={0.18}
                   style={{ x: runwayX, touchAction: "none" }}
                   onDragEnd={(_, info) => {
-                    if (info.offset.x > 18) triggerTakeoff();
+                    if (info.offset.x > 16) triggerTakeoff();
                   }}
                   onClick={triggerTakeoff}
                   aria-label={`Slide jet from ${departureCode} to ${arrivalCode} to open passport`}
-                  className="absolute left-1/2 -translate-x-1/2 rounded-full bg-white/10 p-1.5 transition hover:bg-white/20"
+                  className="absolute left-1/2 -translate-x-1/2 rounded-full bg-white/15 p-2 transition hover:bg-white/25"
                 >
                   <Plane size={15} className="rotate-90" style={{ color: gold }} />
                 </motion.button>
               </div>
               <p className="font-ui text-[9px] uppercase tracking-widest text-white/75">Slide Jet →</p>
             </div>
-            <div>
-              <p className="font-display text-3xl font-bold uppercase">{arrivalCode}</p>
-              <p className="font-ui mt-0.5 text-[10px] uppercase tracking-widest text-white/65">
+            <div className="min-w-0">
+              <p className="font-display text-2xl sm:text-3xl @2xl:text-4xl font-bold uppercase">{arrivalCode}</p>
+              <p className="font-ui mt-0.5 truncate text-[10px] uppercase tracking-widest text-white/65">
                 {arrivalCity}
               </p>
             </div>
           </div>
 
-          {/* Perforated stub divider */}
           <div className="relative flex items-center">
             <span className="-ml-2.5 h-5 w-5 rounded-full bg-black/25" aria-hidden="true" />
             <div className="flex-1 border-t border-dashed border-white/25" />
             <span className="-mr-2.5 h-5 w-5 rounded-full bg-black/25" aria-hidden="true" />
           </div>
 
-          <div className="px-5 py-4">
+          <div className="px-4 sm:px-6 py-4">
             <div className="grid grid-cols-3 gap-2 font-ui text-[11px]">
-              <div>
+              <div className="min-w-0">
                 <p className="uppercase tracking-widest text-white/50">Passenger</p>
                 <p className="mt-0.5 truncate font-semibold">{guestName}</p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="uppercase tracking-widest text-white/50">Date</p>
-                <p className="mt-0.5 font-semibold">{resolvedDateText}</p>
+                <p className="mt-0.5 truncate font-semibold">{resolvedDateText}</p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="uppercase tracking-widest text-white/50">Seat</p>
                 <p className="mt-0.5 font-semibold">LOVE-01A</p>
               </div>
             </div>
-            <p className="font-mono mt-3 text-[10px] tracking-[0.2em] text-white/55">
+            <p className="font-mono mt-3 truncate text-[10px] tracking-[0.18em] text-white/55">
               {"<<<<CELEBRATE<<<<WITH<<<<YOU<<<<"}
             </p>
             <p className="font-ui mt-1 text-[10px] uppercase tracking-[0.22em]" style={{ color: gold }}>
@@ -183,7 +202,7 @@ function BoardingPassComponent({
         {/* BACK: Passport Stamp Page + Takeoff Countdown */}
         <div
           aria-hidden={!flipped}
-          className={`col-start-1 row-start-1 flex flex-col justify-between overflow-hidden rounded-3xl border p-5 text-white shadow-2xl ${
+          className={`col-start-1 row-start-1 flex flex-col justify-between overflow-hidden rounded-3xl border p-4 sm:p-6 text-white shadow-2xl transition-opacity duration-200 ${
             !flipped ? "pointer-events-none" : ""
           }`}
           style={{
@@ -194,9 +213,8 @@ function BoardingPassComponent({
             opacity: prefersReduced && !flipped ? 0 : 1,
           }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              {/* Spinning Compass Rose SVG */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2.5">
               <motion.svg
                 viewBox="0 0 48 48"
                 className="h-9 w-9 shrink-0"
@@ -208,35 +226,34 @@ function BoardingPassComponent({
                 <path d="M24 5L27.5 20.5L43 24L27.5 27.5L24 43L20.5 27.5L5 24L20.5 20.5L24 5Z" fill={gold} fillOpacity="0.88" />
                 <circle cx="24" cy="24" r="3" fill={primary} stroke={gold} strokeWidth="1.2" />
               </motion.svg>
-              <div>
+              <div className="min-w-0">
                 <p className="font-ui text-[10px] font-bold uppercase tracking-[0.24em]" style={{ color: gold }}>
                   Marriage Passport
                 </p>
-                <p className="font-display text-lg font-bold">{guestName}</p>
+                <p className="font-display truncate text-lg font-bold">{guestName}</p>
               </div>
             </div>
 
             <button
               type="button"
               onClick={toggleFlip}
-              className="font-ui inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white transition hover:bg-white/20"
+              className="font-ui inline-flex shrink-0 items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white transition hover:bg-white/20"
             >
               <RotateCw size={11} /> Ticket
             </button>
           </div>
 
-          {/* Inked Passport Stamp + Countdown */}
           <div className="my-3 flex items-center justify-between gap-3 rounded-2xl border border-dashed border-white/20 bg-white/[0.04] px-4 py-2.5">
-            <div>
+            <div className="min-w-0">
               <p className="font-ui text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: gold }}>
                 Takeoff Countdown
               </p>
-              <p className="font-editorial text-sm italic text-white/80">
+              <p className="font-editorial truncate text-sm italic text-white/80">
                 Cleared for {arrivalCity} · {resolvedDateText}
               </p>
             </div>
             <div
-              className="grid h-14 w-14 shrink-0 -rotate-12 place-items-center rounded-full border-2 border-dashed text-center"
+              className="grid h-13 w-13 shrink-0 -rotate-12 place-items-center rounded-full border-2 border-dashed text-center"
               style={{ borderColor: gold, color: gold }}
               aria-hidden="true"
             >
@@ -249,7 +266,7 @@ function BoardingPassComponent({
           </div>
 
           {hasValidTarget && targetDate ? (
-            <div className="scale-[0.92] origin-center">
+            <div className="origin-center scale-[0.94]">
               <Countdown
                 target={targetDate}
                 title={celebrationTitle}

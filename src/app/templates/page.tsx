@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Search, Smartphone, Monitor, ArrowUpRight, Sparkles } from "lucide-react";
 import { TEMPLATES, CATEGORIES, MECHANIC_FILTERS } from "@/lib/templates";
 import type { Template } from "@/lib/types";
@@ -41,7 +41,7 @@ export default function TemplatesPage() {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-5 py-12">
+    <div className="mx-auto max-w-[1440px] px-4 sm:px-6 py-10 sm:py-12">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <p className="font-ui text-xs font-bold uppercase tracking-[0.24em] text-[#6E1F2F]">
           The collection · {TEMPLATES.length} templates
@@ -54,15 +54,15 @@ export default function TemplatesPage() {
         </p>
       </motion.div>
 
-      <div className="sticky top-[64px] z-30 -mx-5 mt-8 border-y hairline bg-[#FAF7F2]/95 px-5 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2.5">
+      <div className="md:sticky md:top-[68px] z-30 -mx-4 sm:-mx-6 mt-8 border-y hairline bg-[#FAF7F2]/95 px-4 sm:px-6 py-3 backdrop-blur">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-2.5">
           <div className="flex flex-wrap items-center gap-2">
             {CATEGORIES.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setCat(c)}
-                className={`rounded-full px-4 py-2 font-ui text-xs font-bold uppercase tracking-[0.1em] transition ${
+                className={`rounded-full px-4 py-2 font-ui text-xs font-bold uppercase tracking-[0.1em] transition-colors ${
                   cat === c
                     ? "bg-[#161412] text-white"
                     : "border hairline bg-white hover:border-[#161412]"
@@ -71,21 +71,21 @@ export default function TemplatesPage() {
                 {c}
               </button>
             ))}
-            <search className="ml-auto">
-              <label className="flex items-center gap-2 rounded-full border hairline bg-white px-4 py-2">
-                <Search size={14} className="text-[#6E655F]" />
+            <search className="w-full sm:w-auto sm:ml-auto">
+              <label className="flex w-full items-center gap-2 rounded-full border hairline bg-white px-4 py-2">
+                <Search size={14} className="shrink-0 text-[#6E655F]" />
                 <input
                   type="search"
                   aria-label="Search templates by style or mechanic"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Search styles, mechanics…"
-                  className="w-44 bg-transparent font-ui text-xs outline-none"
+                  className="w-full sm:w-44 bg-transparent font-ui text-xs outline-none"
                 />
               </label>
             </search>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto sm:flex-wrap pb-0.5">
             <span className="font-ui mr-1 shrink-0 text-[10px] font-bold uppercase tracking-[0.18em] text-[#6E655F]">
               Mechanic:
             </span>
@@ -94,7 +94,7 @@ export default function TemplatesPage() {
                 key={m}
                 type="button"
                 onClick={() => setMech(m)}
-                className={`shrink-0 rounded-full px-3 py-1 font-ui text-[11px] font-semibold transition ${
+                className={`shrink-0 rounded-full px-3 py-1 font-ui text-[11px] font-semibold transition-colors ${
                   mech === m
                     ? "bg-[#6E1F2F] text-white"
                     : "bg-[#F0EAE1] text-[#161412]/80 hover:bg-[#161412]/10"
@@ -110,42 +110,58 @@ export default function TemplatesPage() {
       <p className="font-ui mt-6 text-xs uppercase tracking-[0.2em] text-[#6E655F]">
         Showing {list.length} of {TEMPLATES.length}
       </p>
-      <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         {list.map((t, i) => (
           <TemplateCard
             key={t.id}
             t={t}
             index={i}
-            onQuickPreview={(tpl) => setPreviewTpl(tpl)}
+            onQuickPreview={(tpl) => {
+              setPreviewMode(
+                typeof window !== "undefined" && window.innerWidth >= 1024
+                  ? "desktop"
+                  : "mobile"
+              );
+              setPreviewTpl(tpl);
+            }}
           />
         ))}
       </div>
 
-      {list.length === 0 && (
-        <div className="mt-6 rounded-3xl border hairline bg-white p-12 text-center">
-          <p className="font-display text-2xl font-bold">
-            No matches — try another filter.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setQ("");
-              setCat("All");
-              setMech("All");
-            }}
-            className="font-ui mt-4 rounded-full bg-[#161412] px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-white"
+      <AnimatePresence>
+        {list.length === 0 && (
+          <motion.div
+            key="empty-templates"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25 }}
+            className="mt-6 rounded-3xl border hairline bg-white p-12 text-center"
           >
-            Reset filters
-          </button>
-        </div>
-      )}
+            <p className="font-display text-2xl font-bold">
+              No matches — try another filter.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setQ("");
+                setCat("All");
+                setMech("All");
+              }}
+              className="font-ui mt-4 rounded-full bg-[#161412] px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-white transition-colors hover:bg-[#6E1F2F]"
+            >
+              Reset filters
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AccessibleDialog
         open={Boolean(previewTpl)}
         onClose={() => setPreviewTpl(null)}
         title={previewTpl?.name ?? "Template Preview"}
         subtitle={previewTpl?.tagline}
-        maxWidthClass="max-w-4xl"
+        maxWidthClass="max-w-6xl"
       >
         {previewTpl && (
           <div>
@@ -154,7 +170,7 @@ export default function TemplatesPage() {
                 <button
                   type="button"
                   onClick={() => setPreviewMode("mobile")}
-                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-ui text-[11px] font-bold ${
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-ui text-[11px] font-bold transition-colors ${
                     previewMode === "mobile" ? "bg-[#161412] text-white" : ""
                   }`}
                 >
@@ -163,7 +179,7 @@ export default function TemplatesPage() {
                 <button
                   type="button"
                   onClick={() => setPreviewMode("desktop")}
-                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-ui text-[11px] font-bold ${
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-ui text-[11px] font-bold transition-colors ${
                     previewMode === "desktop" ? "bg-[#161412] text-white" : ""
                   }`}
                 >
@@ -173,22 +189,22 @@ export default function TemplatesPage() {
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={`/invite/${previewTpl.id}`}
-                  className="font-ui inline-flex items-center gap-1.5 rounded-full border hairline bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:border-[#161412]"
+                  className="font-ui inline-flex items-center gap-1.5 rounded-full border hairline bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors hover:border-[#161412]"
                 >
                   Open Full Invite <ArrowUpRight size={13} />
                 </Link>
                 <Link
                   href={`/studio?t=${previewTpl.id}`}
-                  className="font-ui inline-flex items-center gap-1.5 rounded-full bg-[#6E1F2F] px-5 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#161412]"
+                  className="font-ui inline-flex items-center gap-1.5 rounded-full bg-[#6E1F2F] px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#161412]"
                 >
                   <Sparkles size={13} /> Customize in Studio
                 </Link>
               </div>
             </div>
             <div
-              className={`mx-auto overflow-hidden bg-white shadow-2xl ${
+              className={`mx-auto overflow-hidden bg-white shadow-2xl transition-all duration-300 ${
                 previewMode === "mobile"
-                  ? "max-w-[390px] rounded-[2.2rem] border-[8px] border-[#161412]"
+                  ? "max-w-[390px] rounded-[2.2rem] border-4 sm:border-[8px] border-[#161412]"
                   : "w-full rounded-2xl border hairline"
               }`}
             >

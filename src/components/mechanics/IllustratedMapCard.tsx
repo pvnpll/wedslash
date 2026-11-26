@@ -61,11 +61,11 @@ export default function IllustratedMapCard({
   };
 
   return (
-    <div className="mx-auto w-full max-w-md px-5">
+    <div className="mx-auto w-full max-w-md @2xl:max-w-none px-4 sm:px-5 @2xl:px-0">
       <div className="overflow-hidden rounded-3xl bg-white shadow-xl ring-1 ring-black/8">
         {/* Illustrated Route Map Stage */}
         <div
-          className="relative flex h-48 w-full items-center justify-center overflow-hidden"
+          className="relative flex h-48 @2xl:h-56 w-full items-center justify-center overflow-hidden"
           style={{
             background: `linear-gradient(150deg, ${primary} 0%, #1C1417 100%)`,
           }}
@@ -134,12 +134,12 @@ export default function IllustratedMapCard({
             {fullAddress}
           </p>
 
-          <div className="mt-5 grid grid-cols-2 gap-2.5">
+          <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             <a
               href={safeMapHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-ui inline-flex items-center justify-center gap-1.5 rounded-full py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:opacity-90"
+              className="font-ui inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full py-2.5 text-xs font-bold uppercase tracking-wider text-white transition-opacity hover:opacity-90"
               style={{ background: primary }}
             >
               <Navigation size={13} /> Get Directions
@@ -147,7 +147,7 @@ export default function IllustratedMapCard({
             <button
               type="button"
               onClick={copyAddress}
-              className="font-ui inline-flex items-center justify-center gap-1.5 rounded-full border hairline bg-white py-2.5 text-xs font-bold uppercase tracking-wider text-[#161412] transition hover:bg-[#FAF7F2]"
+              className="font-ui inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full border hairline bg-white py-2.5 text-xs font-bold uppercase tracking-wider text-[#161412] transition-colors hover:bg-[#FAF7F2]"
               aria-live="polite"
             >
               {copied ? (

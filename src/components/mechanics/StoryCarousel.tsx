@@ -35,7 +35,7 @@ export default function StoryCarousel({
   });
 
   return (
-    <div className="mx-auto w-full max-w-md px-5">
+    <div className="mx-auto w-full max-w-md @2xl:max-w-xl px-4 sm:px-5">
       <p className="text-center font-ui text-[11px] font-semibold uppercase tracking-[0.28em] text-[#6E655F]">
         {heading}
       </p>
@@ -45,7 +45,7 @@ export default function StoryCarousel({
 
       {/* 3D Photo Story Stack */}
       <div
-        className="relative mt-4 flex h-[390px] items-center justify-center"
+        className="relative mt-4 flex h-[390px] @2xl:h-[430px] items-center justify-center"
         style={{ perspective: 1200 }}
       >
         {stackItems.map(({ slide, depth }) => {
@@ -70,18 +70,19 @@ export default function StoryCarousel({
               transition={
                 prefersReduced
                   ? { duration: 0.15 }
-                  : { type: "spring", stiffness: 220, damping: 24 }
+                  : { type: "spring", stiffness: 250, damping: 26 }
               }
               drag={isFront && total > 1 ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.45}
+              dragElastic={0.42}
+              dragSnapToOrigin
               onDragEnd={(_, info) => {
                 if (!isFront || total <= 1) return;
-                if (info.offset.x < -50) go(1);
-                else if (info.offset.x > 50) go(-1);
+                if (info.offset.x < -50 || info.velocity.x < -300) go(1);
+                else if (info.offset.x > 50 || info.velocity.x > 300) go(-1);
               }}
-              style={{ touchAction: "pan-y" }}
-              className={`absolute inset-x-2 top-0 flex h-[360px] flex-col overflow-hidden rounded-3xl border bg-white shadow-[0_24px_50px_-20px_rgba(22,20,18,0.36)] ${
+              style={{ touchAction: "pan-y", willChange: "transform, opacity" }}
+              className={`absolute inset-x-1 sm:inset-x-2 @2xl:inset-x-4 top-0 flex h-[360px] @2xl:h-[396px] flex-col overflow-hidden rounded-3xl border bg-white shadow-[0_24px_50px_-20px_rgba(22,20,18,0.36)] ${
                 isFront
                   ? "cursor-grab active:cursor-grabbing"
                   : "pointer-events-none select-none"

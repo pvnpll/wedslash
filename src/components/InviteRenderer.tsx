@@ -108,7 +108,7 @@ function InviteRendererComponent({
 
   return (
     <div
-      className="relative"
+      className="@container relative overflow-x-clip"
       style={{ background: template.bg, color: template.ink }}
     >
       {/* Swinging Marigold Toran & Corner Roses */}
@@ -119,7 +119,7 @@ function InviteRendererComponent({
         gold={template.gold}
       />
 
-      {/* Floating Music / Our Song pill */}
+      {/* Floating Music / Our Song pill — stays docked cleanly without overlapping Toran/RSVP */}
       <button
         type="button"
         onClick={toggleMusic}
@@ -131,8 +131,10 @@ function InviteRendererComponent({
             : "Mute soundtrack"
         }
         className={`${
-          embedded ? "absolute right-3 top-3 z-40" : "fixed bottom-5 right-5 z-50"
-        } inline-flex items-center gap-2 rounded-full bg-[#161412] px-4 py-2 font-ui text-xs font-semibold text-white shadow-xl transition hover:bg-[#6E1F2F]`}
+          embedded
+            ? "absolute right-3 bottom-3 @2xl:bottom-auto @2xl:top-3 z-40"
+            : "fixed bottom-4 right-4 z-50"
+        } inline-flex items-center gap-2 rounded-full bg-[#161412] px-4 py-2 font-ui text-xs font-semibold text-white shadow-xl transition-colors hover:bg-[#6E1F2F]`}
       >
         {ytId ? (
           <>
@@ -149,10 +151,12 @@ function InviteRendererComponent({
         )}
       </button>
 
-      {/* ENTRY GATE */}
+      {/* ENTRY GATE — clears marigold toran on top; expands across @2xl desktop containers */}
       <section
         id="invite-sec-gate"
-        className="relative min-h-[620px] overflow-hidden"
+        className={`relative min-h-[min(580px,82dvh)] @2xl:min-h-[640px] overflow-hidden ${
+          cfg.mechanics.marigoldToranEnabled ? "pt-12 @2xl:pt-14" : ""
+        }`}
       >
         {entryType === "boarding-pass" ? (
           <div className="flex min-h-[620px] flex-col items-center justify-center bg-[#0F2440] px-4 py-12 text-white">
@@ -278,16 +282,16 @@ function InviteRendererComponent({
         )}
       </section>
 
-      {/* COUPLE HERO */}
+      {/* COUPLE HERO — Mobile centered vertical editorial; Desktop expansive wide monogram crest + couple spread */}
       <section
         id="invite-sec-hero"
-        className="relative overflow-hidden px-6 py-16 text-center paper-grain"
+        className="relative overflow-hidden px-5 py-14 @2xl:px-12 @2xl:py-20 text-center paper-grain"
       >
         <ParticleCanvas type={cfg.mechanics.particleType} density={20} />
-        <div className="relative mx-auto max-w-md">
+        <div className="relative mx-auto max-w-md @2xl:max-w-4xl">
           {cfg.blessing.enabled && cfg.blessing.symbol !== "none" && (
             <div
-              className="mx-auto grid h-14 w-14 place-items-center rounded-full border-2 bg-white shadow"
+              className="mx-auto grid h-14 w-14 @2xl:h-16 @2xl:w-16 place-items-center rounded-full border-2 bg-white shadow"
               style={{ borderColor: template.gold }}
             >
               <CulturalEmblem
@@ -300,28 +304,38 @@ function InviteRendererComponent({
           <p className="font-ui mt-3 text-[11px] uppercase tracking-[0.3em] opacity-70">
             {copy.together}
           </p>
-          <h1
-            className="font-display mt-2 text-5xl font-bold leading-[1.04] sm:text-6xl"
-            style={{ color: template.primary }}
-          >
-            {cfg.couple.groomName}
-          </h1>
-          <p className="font-ui mt-1 text-[11px] uppercase tracking-[0.2em] opacity-70">
-            {cfg.couple.groomParents}
-          </p>
-          <p className="font-script my-1 text-5xl" style={{ color: template.gold }}>
-            &amp;
-          </p>
-          <h1
-            className="font-display text-5xl font-bold leading-[1.04] sm:text-6xl"
-            style={{ color: template.primary }}
-          >
-            {cfg.couple.brideName}
-          </h1>
-          <p className="font-ui mt-1 text-[11px] uppercase tracking-[0.2em] opacity-70">
-            {cfg.couple.brideParents}
-          </p>
-          <p className="font-editorial mt-4 text-xl italic opacity-80">
+
+          <div className="mt-4 flex flex-col items-center @2xl:grid @2xl:grid-cols-[1fr_auto_1fr] @2xl:items-center @2xl:gap-8">
+            <div className="@2xl:text-right">
+              <h1
+                className="font-display break-words text-4xl sm:text-5xl @2xl:text-6xl font-bold leading-[1.04]"
+                style={{ color: template.primary }}
+              >
+                {cfg.couple.groomName}
+              </h1>
+              <p className="font-ui mt-1.5 text-[11px] uppercase tracking-[0.2em] opacity-70">
+                {cfg.couple.groomParents}
+              </p>
+            </div>
+
+            <p className="font-script my-1.5 @2xl:my-0 text-5xl @2xl:text-6xl" style={{ color: template.gold }}>
+              &amp;
+            </p>
+
+            <div className="@2xl:text-left">
+              <h1
+                className="font-display break-words text-4xl sm:text-5xl @2xl:text-6xl font-bold leading-[1.04]"
+                style={{ color: template.primary }}
+              >
+                {cfg.couple.brideName}
+              </h1>
+              <p className="font-ui mt-1.5 text-[11px] uppercase tracking-[0.2em] opacity-70">
+                {cfg.couple.brideParents}
+              </p>
+            </div>
+          </div>
+
+          <p className="font-editorial mx-auto mt-6 max-w-xl text-lg sm:text-xl @2xl:text-2xl italic opacity-80">
             {cfg.couple.heroSubtitle} · {guestName} · {cfg.couple.hashtag}
           </p>
         </div>
@@ -411,146 +425,151 @@ function InviteRendererComponent({
         </section>
       )}
 
-      {/* GRAND RECEPTION FEATURE CARD */}
-      <section className="mx-auto max-w-md px-6 py-8">
-        <div
-          className="relative overflow-hidden rounded-3xl p-7 text-center text-white shadow-xl"
-          style={{
-            background: `linear-gradient(155deg, ${template.primary}, #161412)`,
-            border: `1px solid ${template.gold}66`,
-          }}
-        >
-          <Sparkles
-            size={20}
-            className="mx-auto"
-            style={{ color: template.gold }}
-          />
-          <p
-            className="font-ui mt-2 text-[10px] font-bold uppercase tracking-[0.28em]"
-            style={{ color: template.gold }}
+      {/* GRAND RECEPTION + DRESS CODE / ETIQUETTE — Stacked on mobile; 2-column desktop showcase */}
+      <div className="mx-auto max-w-md px-4 py-8 @2xl:grid @2xl:max-w-5xl @2xl:grid-cols-2 @2xl:items-stretch @2xl:gap-8 @2xl:px-10 @2xl:py-14">
+        {/* GRAND RECEPTION FEATURE CARD */}
+        <section className="flex">
+          <div
+            className="relative flex w-full flex-col items-center justify-center overflow-hidden rounded-3xl p-7 text-center text-white shadow-xl"
+            style={{
+              background: `linear-gradient(155deg, ${template.primary}, #161412)`,
+              border: `1px solid ${template.gold}66`,
+            }}
           >
-            Finale Celebration
-          </p>
-          <h3 className="font-display mt-1 text-3xl font-bold">
-            {cfg.functions[cfg.functions.length - 1]?.name ?? "Grand Reception"}
-          </h3>
-          <p className="font-editorial mt-1.5 text-lg italic text-white/80">
-            {cfg.functions[cfg.functions.length - 1]?.dayAndDate} ·{" "}
-            {cfg.functions[cfg.functions.length - 1]?.time}
-          </p>
-          <p className="font-ui mt-1 text-xs uppercase tracking-[0.2em] text-white/65">
-            {cfg.functions[cfg.functions.length - 1]?.venueName ??
-              cfg.location.venueTitle}
-          </p>
-        </div>
-      </section>
-
-      {/* DRESS CODE + ETIQUETTE */}
-      <section className="mx-auto max-w-md px-6 py-8">
-        <div
-          className="rounded-3xl border p-6 text-center shadow-sm"
-          style={{ borderColor: `${template.gold}55`, background: "#FFFFFF" }}
-        >
-          <Shirt
-            size={22}
-            className="mx-auto"
-            style={{ color: template.primary }}
-          />
-          <h3 className="font-display mt-2 text-2xl font-bold text-[#161412]">
-            {copy.dressCode}
-          </h3>
-          <div className="mt-3 grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
-            <div className="rounded-2xl bg-[#FAF7F2] p-3.5 text-[#161412]">
-              <p
-                className="font-ui text-[10px] font-bold uppercase tracking-[0.18em]"
-                style={{ color: template.primary }}
-              >
-                Ladies
-              </p>
-              <p className="mt-1 text-[13px] leading-relaxed">
-                {cfg.etiquetteAndDetails.ladiesDressNote}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-[#FAF7F2] p-3.5 text-[#161412]">
-              <p
-                className="font-ui text-[10px] font-bold uppercase tracking-[0.18em]"
-                style={{ color: template.primary }}
-              >
-                Gentlemen
-              </p>
-              <p className="mt-1 text-[13px] leading-relaxed">
-                {cfg.etiquetteAndDetails.gentlemenDressNote}
-              </p>
-            </div>
-          </div>
-          {cfg.etiquetteAndDetails.reservedColorsNote && (
-            <p className="font-ui mt-3 rounded-2xl bg-[#6E1F2F]/8 px-4 py-2.5 text-xs font-medium text-[#6E1F2F]">
-              {cfg.etiquetteAndDetails.reservedColorsNote}
+            <Sparkles
+              size={22}
+              className="mx-auto"
+              style={{ color: template.gold }}
+            />
+            <p
+              className="font-ui mt-2 text-[10px] font-bold uppercase tracking-[0.28em]"
+              style={{ color: template.gold }}
+            >
+              Finale Celebration
             </p>
-          )}
-          <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[#FAF7F2] p-3.5 text-left text-[13px] text-[#161412]">
-            <Gift
-              size={16}
-              className="mt-0.5 shrink-0"
+            <h3 className="font-display mt-1 text-3xl @2xl:text-4xl font-bold">
+              {cfg.functions[cfg.functions.length - 1]?.name ?? "Grand Reception"}
+            </h3>
+            <p className="font-editorial mt-2 text-lg @2xl:text-xl italic text-white/80">
+              {cfg.functions[cfg.functions.length - 1]?.dayAndDate} ·{" "}
+              {cfg.functions[cfg.functions.length - 1]?.time}
+            </p>
+            <p className="font-ui mt-1.5 text-xs uppercase tracking-[0.2em] text-white/65">
+              {cfg.functions[cfg.functions.length - 1]?.venueName ??
+                cfg.location.venueTitle}
+            </p>
+          </div>
+        </section>
+
+        {/* DRESS CODE + ETIQUETTE */}
+        <section className="mt-6 flex @2xl:mt-0">
+          <div
+            className="w-full rounded-3xl border p-6 text-center shadow-sm"
+            style={{ borderColor: `${template.gold}55`, background: "#FFFFFF" }}
+          >
+            <Shirt
+              size={22}
+              className="mx-auto"
               style={{ color: template.primary }}
             />
-            <p>
-              <strong>Gift note:</strong>{" "}
-              {cfg.etiquetteAndDetails.giftPreferenceNote}
-            </p>
+            <h3 className="font-display mt-2 text-2xl font-bold text-[#161412]">
+              {copy.dressCode}
+            </h3>
+            <div className="mt-3 grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
+              <div className="rounded-2xl bg-[#FAF7F2] p-3.5 text-[#161412]">
+                <p
+                  className="font-ui text-[10px] font-bold uppercase tracking-[0.18em]"
+                  style={{ color: template.primary }}
+                >
+                  Ladies
+                </p>
+                <p className="mt-1 text-[13px] leading-relaxed">
+                  {cfg.etiquetteAndDetails.ladiesDressNote}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-[#FAF7F2] p-3.5 text-[#161412]">
+                <p
+                  className="font-ui text-[10px] font-bold uppercase tracking-[0.18em]"
+                  style={{ color: template.primary }}
+                >
+                  Gentlemen
+                </p>
+                <p className="mt-1 text-[13px] leading-relaxed">
+                  {cfg.etiquetteAndDetails.gentlemenDressNote}
+                </p>
+              </div>
+            </div>
+            {cfg.etiquetteAndDetails.reservedColorsNote && (
+              <p className="font-ui mt-3 rounded-2xl bg-[#6E1F2F]/8 px-4 py-2.5 text-xs font-medium text-[#6E1F2F]">
+                {cfg.etiquetteAndDetails.reservedColorsNote}
+              </p>
+            )}
+            <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[#FAF7F2] p-3.5 text-left text-[13px] text-[#161412]">
+              <Gift
+                size={16}
+                className="mt-0.5 shrink-0"
+                style={{ color: template.primary }}
+              />
+              <p>
+                <strong>Gift note:</strong>{" "}
+                {cfg.etiquetteAndDetails.giftPreferenceNote}
+              </p>
+            </div>
+            <a
+              href={`tel:${cfg.etiquetteAndDetails.organizerPhone}`}
+              className="font-ui mt-3 inline-flex flex-wrap items-center justify-center gap-1.5 text-xs font-semibold underline"
+              style={{ color: template.primary }}
+            >
+              <Phone size={13} /> Wedding organizer:{" "}
+              {cfg.etiquetteAndDetails.organizerName} ·{" "}
+              {cfg.etiquetteAndDetails.organizerPhone}
+            </a>
           </div>
-          <a
-            href={`tel:${cfg.etiquetteAndDetails.organizerPhone}`}
-            className="font-ui mt-3 inline-flex items-center gap-1.5 text-xs font-semibold underline"
-            style={{ color: template.primary }}
-          >
-            <Phone size={13} /> Wedding organizer:{" "}
-            {cfg.etiquetteAndDetails.organizerName} ·{" "}
-            {cfg.etiquetteAndDetails.organizerPhone}
-          </a>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      {/* ILLUSTRATED ROUTE MAP */}
-      <section id="invite-sec-map" className="py-10">
-        <IllustratedMapCard
-          venueTitle={cfg.location.venueTitle}
-          fullAddress={cfg.location.fullAddress}
-          city={cfg.location.city}
-          googleMapsUrl={cfg.location.googleMapsUrl}
-          primary={template.primary}
-          gold={template.gold}
-          heading={copy.venue}
-        />
-      </section>
-
-      {/* RSVP */}
-      <section
-        id="invite-sec-rsvp"
-        className="py-12"
+      {/* VENUE ROUTE + RSVP LOUNGE — 2-column desktop grid, clean vertical stack on mobile */}
+      <div
+        className="px-4 py-12 @2xl:px-10 @2xl:py-16"
         style={{ background: `${template.primary}0D` }}
       >
-        <RsvpForm
-          guestName={guestName}
-          inviteSlug={cfg.slug}
-          hostPhone={cfg.rsvpConfig.whatsappHostNumber}
-          deadlineText={cfg.rsvpConfig.deadlineText}
-          allowTellLater={cfg.rsvpConfig.allowTellLater}
-          collectChildrenDetails={cfg.rsvpConfig.collectChildrenDetails}
-          collectDietary={cfg.rsvpConfig.collectDietary}
-          collectDrinkPreference={cfg.rsvpConfig.collectDrinkPreference}
-          drinkOptions={cfg.rsvpConfig.drinkOptions}
-          collectDanceSong={cfg.rsvpConfig.collectDanceSong}
-          congratulationsPrompt={cfg.etiquetteAndDetails.congratulationsPrompt}
-          heading={copy.rsvpHeading}
-          subHeading={copy.rsvpSub}
-          primary={template.primary}
-        />
-      </section>
+        <div className="mx-auto grid max-w-md grid-cols-1 gap-8 @2xl:max-w-5xl @2xl:grid-cols-[0.95fr_1.05fr] @2xl:items-start">
+          <section id="invite-sec-map">
+            <IllustratedMapCard
+              venueTitle={cfg.location.venueTitle}
+              fullAddress={cfg.location.fullAddress}
+              city={cfg.location.city}
+              googleMapsUrl={cfg.location.googleMapsUrl}
+              primary={template.primary}
+              gold={template.gold}
+              heading={copy.venue}
+            />
+          </section>
 
-      {/* CLOSING */}
+          <section id="invite-sec-rsvp">
+            <RsvpForm
+              guestName={guestName}
+              inviteSlug={cfg.slug}
+              hostPhone={cfg.rsvpConfig.whatsappHostNumber}
+              deadlineText={cfg.rsvpConfig.deadlineText}
+              allowTellLater={cfg.rsvpConfig.allowTellLater}
+              collectChildrenDetails={cfg.rsvpConfig.collectChildrenDetails}
+              collectDietary={cfg.rsvpConfig.collectDietary}
+              collectDrinkPreference={cfg.rsvpConfig.collectDrinkPreference}
+              drinkOptions={cfg.rsvpConfig.drinkOptions}
+              collectDanceSong={cfg.rsvpConfig.collectDanceSong}
+              congratulationsPrompt={cfg.etiquetteAndDetails.congratulationsPrompt}
+              heading={copy.rsvpHeading}
+              subHeading={copy.rsvpSub}
+              primary={template.primary}
+            />
+          </section>
+        </div>
+      </div>
+
+      {/* CLOSING (extra bottom padding clears floating music pill cleanly on mobile) */}
       <section
-        className="px-6 py-16 text-center text-white"
+        className="px-6 pt-16 pb-24 @2xl:pb-16 text-center text-white"
         style={{
           background: `linear-gradient(170deg, ${template.primary}, #161412)`,
         }}

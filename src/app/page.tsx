@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import {
   ArrowRight,
   BookOpen,
@@ -53,15 +54,16 @@ export default function Home() {
     HERO_DEMOS.find((d) => d.id === heroDemo) ?? HERO_DEMOS[0];
 
   return (
-    <div>
+    <MotionConfig reducedMotion="user">
+      <div>
       {/* HERO */}
       <section className="relative overflow-hidden border-b hairline paper-grain">
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 pb-16 pt-12 lg:grid-cols-2 lg:pt-16">
-          <div>
-            <p className="font-ui inline-flex items-center gap-2 rounded-full border hairline bg-white px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6E1F2F]">
-              <Sparkles size={13} /> 18 couture templates · Zero code
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-5 pb-16 pt-12 lg:grid-cols-2 lg:pt-16">
+          <div className="min-w-0">
+            <p className="font-ui inline-flex max-w-full items-center gap-2 rounded-full border hairline bg-white px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6E1F2F]">
+              <Sparkles size={13} className="shrink-0" /> <span className="truncate">18 couture templates · Zero code</span>
             </p>
-            <h1 className="font-display mt-5 text-5xl font-bold leading-[1.04] tracking-tight sm:text-6xl lg:text-[4.4rem]">
+            <h1 className="font-display mt-5 text-[2.5rem] font-bold leading-[1.06] tracking-tight sm:text-6xl lg:text-[4.4rem]">
               Invitations your guests{" "}
               <em className="gold-text not-italic font-bold">
                 hold, trace, wipe &amp; spin
@@ -101,162 +103,173 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Interactive Live Phone Stage */}
-          <div className="relative mx-auto w-full max-w-[380px]">
-            <div
-              className="mb-3 grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:justify-center"
-              role="tablist"
-              aria-label="Test live invitation mechanics"
-            >
-              {HERO_DEMOS.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={heroDemo === d.id}
-                  onClick={() => setHeroDemo(d.id)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 font-ui text-[11px] font-bold uppercase tracking-wider transition ${
-                    heroDemo === d.id
-                      ? "bg-[#6E1F2F] text-white shadow"
-                      : "border hairline bg-white text-[#161412] hover:border-[#161412]"
-                  }`}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
-
-            <div
-              className="pointer-events-none absolute -inset-6 top-8 rounded-[3rem]"
-              style={{
-                background:
-                  "radial-gradient(circle at 50% 45%, rgba(110, 31, 47, 0.14) 0%, rgba(212, 175, 55, 0.12) 45%, transparent 72%)",
-              }}
-              aria-hidden="true"
-            />
-            <div
-              className="relative mx-auto max-w-[350px] overflow-hidden rounded-[2.6rem] border-[10px] border-[#161412] bg-[#FDF3EC] shadow-[0_36px_70px_-28px_rgba(22,20,18,0.45)]"
-              style={{ height: 610 }}
-            >
+            {/* Interactive Live Phone Stage (fits 360px mobile & glides smoothly between demos) */}
+            <div className="relative mx-auto w-full min-w-0 max-w-full sm:max-w-[380px] lg:max-w-[410px]">
               <div
-                className="pointer-events-none absolute left-1/2 top-2.5 z-30 h-5 w-24 -translate-x-1/2 rounded-full bg-[#161412]"
+                className="no-scrollbar mb-3 flex w-full items-center gap-1.5 overflow-x-auto pb-1 sm:flex-wrap sm:justify-center sm:overflow-visible"
+                role="tablist"
+                aria-label="Test live invitation mechanics"
+              >
+                {HERO_DEMOS.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={heroDemo === d.id}
+                    onClick={() => setHeroDemo(d.id)}
+                    className={`shrink-0 rounded-full px-3 py-1.5 font-ui text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                      heroDemo === d.id
+                        ? "bg-[#6E1F2F] text-white shadow"
+                        : "border hairline bg-white text-[#161412] hover:border-[#161412]"
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+
+              <div
+                className="pointer-events-none absolute -inset-2 sm:-inset-5 top-8 rounded-[3rem]"
+                style={{
+                  background:
+                    "radial-gradient(circle at 50% 45%, rgba(110, 31, 47, 0.14) 0%, rgba(212, 175, 55, 0.12) 45%, transparent 72%)",
+                }}
                 aria-hidden="true"
               />
-              {heroDemo === "bloom" && (
-                <BiometricBloomGate
-                  groom="Arjun"
-                  bride="Priya"
-                  monogram="A · P"
-                  guestName="You ♡"
+              <div
+                className="relative mx-auto h-[550px] sm:h-[610px] w-full max-w-[335px] sm:max-w-[370px] overflow-hidden rounded-[2.4rem] border-[6px] sm:border-[10px] border-[#161412] bg-[#FDF3EC] shadow-[0_36px_70px_-28px_rgba(22,20,18,0.45)]"
+              >
+                <div
+                  className="pointer-events-none absolute left-1/2 top-2.5 z-30 h-5 w-24 -translate-x-1/2 rounded-full bg-[#161412]"
+                  aria-hidden="true"
                 />
-              )}
-              {heroDemo === "stars" && (
-                <ConstellationGate
-                  groom="Arjun"
-                  bride="Priya"
-                  guestName="You ♡"
-                />
-              )}
-              {heroDemo === "dial" && (
-                <MandalaDialGate
-                  groom="Zohan"
-                  bride="Amira"
-                  monogram="Z · A"
-                  guestName="You ♡"
-                />
-              )}
-              {heroDemo === "frost" && (
-                <FrostWipeGate
-                  groom="Luca"
-                  bride="Maya"
-                  guestName="You ♡"
-                />
-              )}
-              {heroDemo === "tear" && (
-                <TearPerforationGate
-                  groom="Matteo"
-                  bride="Elena"
-                  guestName="You ♡"
-                />
-              )}
-              {heroDemo === "book" && (
-                <BookGate
-                  groom="Arjun"
-                  bride="Priya"
-                  groomParents="Son of Rajesh & Sunita Sharma"
-                  brideParents="Daughter of Vikram & Meera Kapoor"
-                  guestName="You ♡"
-                  compact
-                />
-              )}
-              {heroDemo === "tassel" && (
-                <div className="flex h-full items-center justify-center bg-[#FFF9EF] pt-6">
-                  <TasselScroll
-                    dateLabel="Fri, 13 Feb 2027"
-                    muhurat="Pheras at 7:30 PM"
-                    target="2027-02-13T19:30:00"
-                    title="Arjun weds Priya"
-                    venue="Lake Pichola Palace, Udaipur"
-                  />
-                </div>
-              )}
-              {heroDemo === "scratch" && (
-                <div className="flex h-full items-center justify-center bg-[#FDF8EF] pt-6">
-                  <ScratchCard
-                    day="13"
-                    month="FEB"
-                    year="2027"
-                    venue="Lake Pichola Palace · 7:30 PM"
-                    target="2027-02-13T19:30:00"
-                    title="Arjun weds Priya"
-                  />
-                </div>
-              )}
-              {heroDemo === "petals" && (
-                <div className="flex h-full items-center justify-center bg-[#FDF0F3] pt-6">
-                  <BrushPetalsReveal
-                    dateLabel="Fri, 13 Feb 2027"
-                    muhurat="Pheras at 7:30 PM"
-                    venue="Lake Pichola Palace"
-                    target="2027-02-13T19:30:00"
-                    title="Arjun weds Priya"
-                    compact
-                  />
-                </div>
-              )}
-              {heroDemo === "polaroid" && (
-                <div className="flex h-full items-center justify-center bg-[#F6F1E6] pt-6">
-                  <PolaroidDevelop
-                    groom="Luca"
-                    bride="Maya"
-                    dateLabel="27 · 07 · 27"
-                    venue="Villa Borghese · Rome"
-                    target="2027-07-27T17:00:00"
-                    title="Luca & Maya"
-                    compact
-                  />
-                </div>
-              )}
-              {heroDemo === "boarding" && (
-                <div className="flex h-full items-center justify-center bg-[#0F2440] pt-6">
-                  <BoardingPass
-                    guestName="You ♡"
-                    groom="Marcus"
-                    bride="Elisabeth"
-                    departureCode="DEL"
-                    departureCity="Your City"
-                    arrivalCode="MEX"
-                    arrivalCity="Puerto Vallarta"
-                    targetDate="2027-05-05T17:00:00"
-                    compact
-                  />
-                </div>
-              )}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={heroDemo}
+                    initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -12, scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 26 }}
+                    className="h-full w-full"
+                    style={{ willChange: "transform, opacity" }}
+                  >
+                    {heroDemo === "bloom" && (
+                      <BiometricBloomGate
+                        groom="Arjun"
+                        bride="Priya"
+                        monogram="A · P"
+                        guestName="You ♡"
+                      />
+                    )}
+                    {heroDemo === "stars" && (
+                      <ConstellationGate
+                        groom="Arjun"
+                        bride="Priya"
+                        guestName="You ♡"
+                      />
+                    )}
+                    {heroDemo === "dial" && (
+                      <MandalaDialGate
+                        groom="Zohan"
+                        bride="Amira"
+                        monogram="Z · A"
+                        guestName="You ♡"
+                      />
+                    )}
+                    {heroDemo === "frost" && (
+                      <FrostWipeGate
+                        groom="Luca"
+                        bride="Maya"
+                        guestName="You ♡"
+                      />
+                    )}
+                    {heroDemo === "tear" && (
+                      <TearPerforationGate
+                        groom="Matteo"
+                        bride="Elena"
+                        guestName="You ♡"
+                      />
+                    )}
+                    {heroDemo === "book" && (
+                      <BookGate
+                        groom="Arjun"
+                        bride="Priya"
+                        groomParents="Son of Rajesh & Sunita Sharma"
+                        brideParents="Daughter of Vikram & Meera Kapoor"
+                        guestName="You ♡"
+                        compact
+                      />
+                    )}
+                    {heroDemo === "tassel" && (
+                      <div className="flex h-full items-center justify-center bg-[#FFF9EF] pt-6">
+                        <TasselScroll
+                          dateLabel="Fri, 13 Feb 2027"
+                          muhurat="Pheras at 7:30 PM"
+                          target="2027-02-13T19:30:00"
+                          title="Arjun weds Priya"
+                          venue="Lake Pichola Palace, Udaipur"
+                        />
+                      </div>
+                    )}
+                    {heroDemo === "scratch" && (
+                      <div className="flex h-full items-center justify-center bg-[#FDF8EF] pt-6">
+                        <ScratchCard
+                          day="13"
+                          month="FEB"
+                          year="2027"
+                          venue="Lake Pichola Palace · 7:30 PM"
+                          target="2027-02-13T19:30:00"
+                          title="Arjun weds Priya"
+                        />
+                      </div>
+                    )}
+                    {heroDemo === "petals" && (
+                      <div className="flex h-full items-center justify-center bg-[#FDF0F3] pt-6">
+                        <BrushPetalsReveal
+                          dateLabel="Fri, 13 Feb 2027"
+                          muhurat="Pheras at 7:30 PM"
+                          venue="Lake Pichola Palace"
+                          target="2027-02-13T19:30:00"
+                          title="Arjun weds Priya"
+                          compact
+                        />
+                      </div>
+                    )}
+                    {heroDemo === "polaroid" && (
+                      <div className="flex h-full items-center justify-center bg-[#F6F1E6] pt-6">
+                        <PolaroidDevelop
+                          groom="Luca"
+                          bride="Maya"
+                          dateLabel="27 · 07 · 27"
+                          venue="Villa Borghese · Rome"
+                          target="2027-07-27T17:00:00"
+                          title="Luca & Maya"
+                          compact
+                        />
+                      </div>
+                    )}
+                    {heroDemo === "boarding" && (
+                      <div className="flex h-full items-center justify-center bg-[#0F2440] pt-6">
+                        <BoardingPass
+                          guestName="You ♡"
+                          groom="Marcus"
+                          bride="Elisabeth"
+                          departureCode="DEL"
+                          departureCity="Your City"
+                          arrivalCode="MEX"
+                          arrivalCity="Puerto Vallarta"
+                          targetDate="2027-05-05T17:00:00"
+                          compact
+                        />
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              <p className="font-ui mt-3 flex items-center justify-center gap-1.5 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#6E655F]">
+                <MousePointerClick size={14} className="shrink-0" /> Live demo — {currentDemoMeta.hint}
+              </p>
             </div>
-            <p className="font-ui mt-3 flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#6E655F]">
-              <MousePointerClick size={14} /> Live demo — {currentDemoMeta.hint}
-            </p>
-          </div>
         </div>
       </section>
 
@@ -492,6 +505,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </MotionConfig>
   );
 }

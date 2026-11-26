@@ -15,9 +15,9 @@ export interface DiyaLampGateProps {
 }
 
 /**
- * Brass Diya Temple Lamp Gate: drag the glowing brass spark wand onto the
- * cotton wick (or tap to auto-strike) to ignite a warm flame, expanding a
- * circular temple-light shockwave into the scroll with the lit Diya keepsake.
+ * Brass Diya Temple Lamp Gate: drag the spark wand onto the cotton wick
+ * (springing gently back if released early) to ignite the flame and expand a
+ * golden temple-light shockwave into the scroll with a lit Diya keepsake.
  */
 function DiyaLampGateComponent({
   groom,
@@ -51,21 +51,21 @@ function DiyaLampGateComponent({
     const rect = wick.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    if (Math.hypot(clientX - cx, clientY - cy) < 58) {
+    if (Math.hypot(clientX - cx, clientY - cy) < 62) {
       ignite();
     }
   };
 
   const litDiyaCrest = (
-    <div className="relative flex flex-col items-center">
+    <div className="relative flex flex-col items-center @2xl:px-2">
       <motion.div
-        animate={lit && !prefersReduced ? { scale: [1, 1.12, 1], y: [0, -1, 0] } : undefined}
+        animate={lit && !prefersReduced ? { scale: [1, 1.14, 1], y: [0, -1.5, 0] } : undefined}
         transition={{ repeat: Infinity, duration: 1.5 }}
       >
-        <Flame size={28} className="text-[#FF9D2E]" fill="#FFC94D" />
+        <Flame size={34} className="text-[#FF9D2E] @2xl:scale-125" fill="#FFC94D" />
       </motion.div>
       <div
-        className="mt-0.5 h-3.5 w-14 rounded-b-full border-t-2 shadow"
+        className="mt-0.5 h-4 w-16 @2xl:w-20 rounded-b-full border-t-2 shadow"
         style={{ background: "linear-gradient(180deg, #9A3412, #431407)", borderColor: gold }}
       />
     </div>
@@ -73,26 +73,25 @@ function DiyaLampGateComponent({
 
   return (
     <div
-      className="relative flex h-full min-h-[600px] w-full flex-col items-center justify-center overflow-hidden px-5 py-8"
+      className="relative flex h-full min-h-[min(580px,82dvh)] @2xl:min-h-[620px] w-full flex-col items-center justify-center overflow-hidden px-4 py-8 @2xl:px-10"
       style={{ background: "linear-gradient(180deg, #170806 0%, #2A0E04 70%, #170806 100%)" }}
     >
-      {/* Expanding Golden Light Wave Reveal */}
       <motion.div
         initial={false}
         animate={
           lit
-            ? { clipPath: "circle(140% at 50% 44%)", opacity: 1 }
+            ? { clipPath: "circle(145% at 50% 44%)", opacity: 1 }
             : { clipPath: "circle(0% at 50% 44%)", opacity: 0 }
         }
         transition={{ duration: prefersReduced ? 0.2 : 0.95, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute inset-0 z-10 flex items-center justify-center px-5"
+        className="absolute inset-0 z-10 flex items-center justify-center px-4 @2xl:px-10"
         style={{
           background:
             "radial-gradient(circle at 50% 30%, rgba(255,204,92,0.38) 0%, rgba(255,245,220,0.96) 52%, #FDF5E4 100%)",
           pointerEvents: lit ? "auto" : "none",
         }}
       >
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-md @2xl:max-w-2xl @4xl:max-w-3xl">
           <GateRevealedCard
             guestName={guestName}
             headline={headline}
@@ -103,21 +102,19 @@ function DiyaLampGateComponent({
             surface="warm-dark"
             keepsake={litDiyaCrest}
             revealed={lit}
-            delay={0.22}
+            delay={0.2}
           />
         </div>
       </motion.div>
 
-      {/* Dark Sanctum Unlit Brass Diya + Draggable Spark Wand */}
       <motion.div
         initial={false}
         animate={{ opacity: lit ? 0 : 1, scale: lit ? 1.06 : 1 }}
         transition={{ duration: prefersReduced ? 0.15 : 0.45, delay: lit ? 0.15 : 0 }}
-        className="relative z-20 flex flex-col items-center text-center"
+        className="relative z-20 flex w-full max-w-[260px] flex-col items-center text-center"
         style={{ pointerEvents: lit ? "none" : "auto", willChange: "transform, opacity" }}
       >
-        {/* Wick & Brass Oil Bowl */}
-        <div ref={wickRef} className="relative flex flex-col items-center">
+        <div ref={wickRef} className="relative flex w-full flex-col items-center">
           <div
             className="grid h-16 w-16 place-items-center rounded-full border border-dashed"
             style={{ borderColor: `${gold}77`, background: "rgba(255,190,80,0.08)" }}
@@ -126,7 +123,7 @@ function DiyaLampGateComponent({
           </div>
           <div className="h-3 w-1.5 rounded-full bg-[#3A1C07]" aria-hidden="true" />
           <div
-            className="grid h-20 w-52 place-items-center rounded-b-full border-t-4 shadow-2xl"
+            className="grid h-20 w-full max-w-[216px] place-items-center rounded-b-full border-t-4 shadow-2xl"
             style={{
               background: "linear-gradient(180deg, #7C2D12, #431407)",
               borderColor: gold,
@@ -147,18 +144,18 @@ function DiyaLampGateComponent({
           For · {guestName}
         </div>
 
-        {/* Draggable Brass Spark Wand */}
         <motion.button
           type="button"
           drag={prefersReduced || lit ? false : true}
           dragSnapToOrigin
+          dragTransition={{ bounceStiffness: 340, bounceDamping: 26 }}
           dragElastic={0.35}
           style={{ x: wandX, y: wandY, touchAction: "none" }}
           onDrag={(_, info) => checkWickContact(info.point.x, info.point.y)}
           onClick={ignite}
           aria-label={cta}
           tabIndex={lit ? -1 : 0}
-          whileHover={!lit && !prefersReduced ? { scale: 1.08 } : undefined}
+          whileHover={!lit && !prefersReduced ? { scale: 1.07 } : undefined}
           className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#FFC94D] px-5 py-2.5 font-ui text-xs font-bold uppercase tracking-[0.14em] text-[#431407] shadow-[0_0_24px_rgba(255,201,77,0.45)]"
         >
           <Sparkles size={15} /> {cta}

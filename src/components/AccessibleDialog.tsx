@@ -77,7 +77,7 @@ export default function AccessibleDialog({
       }}
       className={`w-[calc(100%-2rem)] ${maxWidthClass} rounded-3xl border hairline bg-[#FAF7F2] p-0 text-[#161412] shadow-2xl`}
     >
-      <div className="flex items-start justify-between gap-4 border-b hairline bg-white px-6 py-4">
+      <div className="flex items-start justify-between gap-4 border-b hairline bg-white px-4 py-4 sm:px-6">
         <div>
           <h1 id={titleId} className="font-display text-2xl font-bold leading-tight">
             {title}
@@ -90,12 +90,12 @@ export default function AccessibleDialog({
           type="button"
           onClick={() => ref.current?.close()}
           aria-label="Close dialog"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full border hairline bg-[#FAF7F2] transition hover:bg-[#161412] hover:text-white"
+          className="grid h-11 w-11 sm:h-9 sm:w-9 shrink-0 place-items-center rounded-full border hairline bg-[#FAF7F2] transition-colors hover:bg-[#161412] hover:text-white"
         >
           <X size={16} />
         </button>
       </div>
-      <div className="max-h-[82dvh] overflow-y-auto p-6">{children}</div>
+      <div className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">{children}</div>
     </dialog>
   );
 }

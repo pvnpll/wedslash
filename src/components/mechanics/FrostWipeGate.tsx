@@ -15,9 +15,9 @@ export interface FrostWipeGateProps {
 }
 
 /**
- * Morning Lake Mist Wipe Gate: the live invitation sits behind a frosted glass
- * condensation canvas. As the guest rubs away the mist (destination-out strokes),
- * the crystal invitation appears directly in place with zero swap jump.
+ * Morning Lake Mist Wipe Gate: smooth quadratic-midpoint condensation brush
+ * reveals the live couture card right behind the pane with 0px layout shift
+ * and automatic desktop widescreen expansion.
  */
 function FrostWipeGateComponent({
   groom,
@@ -35,6 +35,7 @@ function FrostWipeGateComponent({
   const drawingRef = useRef(false);
   const rectRef = useRef<DOMRect | null>(null);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
+  const midRef = useRef<{ x: number; y: number } | null>(null);
   const wipeDistRef = useRef(0);
 
   const headline =
@@ -67,7 +68,6 @@ function FrostWipeGateComponent({
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
-    // Subtle frosted dew droplets across the pane
     for (let i = 0; i < 65; i++) {
       const rx = ((i * 97) % 100) * 0.01 * w;
       const ry = ((i * 53) % 100) * 0.01 * h;
@@ -108,25 +108,32 @@ function FrostWipeGateComponent({
     }
   };
 
-  const wipeStroke = (from: { x: number; y: number }, to: { x: number; y: number }) => {
+  const wipeToPoint = (pt: { x: number; y: number }) => {
     const canvas = canvasRef.current;
     const rect = rectRef.current;
     const ctx = canvas?.getContext("2d", { willReadFrequently: true });
-    if (!canvas || !ctx || !rect || !rect.width) return;
+    const prev = lastRef.current;
+    const prevMid = midRef.current ?? prev;
+    if (!canvas || !ctx || !rect || !rect.width || !prev || !prevMid) return;
+
     const ratio = canvas.width / rect.width;
+    const nextMid = { x: (prev.x + pt.x) / 2, y: (prev.y + pt.y) / 2 };
 
     ctx.save();
     ctx.globalCompositeOperation = "destination-out";
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.lineWidth = 46 * ratio;
+    ctx.lineWidth = 50 * ratio;
     ctx.beginPath();
-    ctx.moveTo(from.x * ratio, from.y * ratio);
-    ctx.lineTo(to.x * ratio, to.y * ratio);
+    ctx.moveTo(prevMid.x * ratio, prevMid.y * ratio);
+    ctx.quadraticCurveTo(prev.x * ratio, prev.y * ratio, nextMid.x * ratio, nextMid.y * ratio);
     ctx.stroke();
     ctx.restore();
 
-    wipeDistRef.current += Math.hypot(to.x - from.x, to.y - from.y);
+    wipeDistRef.current += Math.hypot(pt.x - prev.x, pt.y - prev.y);
+    lastRef.current = pt;
+    midRef.current = nextMid;
+
     if (wipeDistRef.current >= 160) {
       wipeDistRef.current = 0;
       sampleClearProgress();
@@ -134,15 +141,11 @@ function FrostWipeGateComponent({
   };
 
   return (
-    <div
-      className="relative flex h-full min-h-[600px] w-full flex-col items-center justify-center overflow-hidden bg-[#ECEAE4] px-5 py-8"
-    >
-      {/* Frosted Glass Showcase Window */}
+    <div className="relative flex h-full min-h-[min(580px,82dvh)] @2xl:min-h-[620px] w-full flex-col items-center justify-center overflow-hidden bg-[#ECEAE4] px-4 py-8 @2xl:px-10">
       <div
-        className="relative w-full max-w-sm overflow-hidden rounded-[2rem] shadow-2xl ring-1 ring-black/10"
+        className="relative w-full max-w-md @2xl:max-w-2xl @4xl:max-w-3xl overflow-hidden rounded-[2rem] shadow-2xl ring-1 ring-black/10"
         style={{ background: "#FAF7F2" }}
       >
-        {/* Underlying live invitation sits right behind the condensation pane */}
         <GateRevealedCard
           guestName={guestName}
           headline={headline}
@@ -152,7 +155,6 @@ function FrostWipeGateComponent({
           revealed
         />
 
-        {/* Mist Canvas Layer (dissolves cleanly once 34%+ wiped) */}
         <motion.div
           initial={false}
           animate={{ opacity: cleared ? 0 : 1, scale: cleared ? 1.03 : 1 }}
@@ -170,25 +172,26 @@ function FrostWipeGateComponent({
               drawingRef.current = true;
               const pt = { x: e.clientX - rect.left, y: e.clientY - rect.top };
               lastRef.current = pt;
+              midRef.current = pt;
               e.currentTarget.setPointerCapture(e.pointerId);
-              wipeStroke(pt, pt);
+              wipeToPoint(pt);
             }}
             onPointerMove={(e) => {
-              if (!drawingRef.current || !lastRef.current || cleared) return;
+              if (!drawingRef.current || cleared) return;
               const rect = rectRef.current;
               if (!rect) return;
-              const pt = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-              wipeStroke(lastRef.current, pt);
-              lastRef.current = pt;
+              wipeToPoint({ x: e.clientX - rect.left, y: e.clientY - rect.top });
             }}
             onPointerUp={() => {
               drawingRef.current = false;
               lastRef.current = null;
+              midRef.current = null;
               sampleClearProgress();
             }}
             onPointerCancel={() => {
               drawingRef.current = false;
               lastRef.current = null;
+              midRef.current = null;
             }}
             className="h-full w-full cursor-grab active:cursor-grabbing"
             style={{ touchAction: "none" }}
@@ -196,7 +199,7 @@ function FrostWipeGateComponent({
         </motion.div>
       </div>
 
-      {/* Fixed-height Prompt / Quick Clear slot so clearing mist causes zero layout shift */}
+      {/* Fixed-height slot prevents any layout jump when fading away */}
       <div className="mt-4 flex min-h-[40px] items-center justify-center">
         <motion.button
           type="button"

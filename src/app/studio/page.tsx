@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -98,13 +98,32 @@ function Field({
 const inputCls =
   "font-ui w-full rounded-xl border hairline bg-white px-3.5 py-2 text-sm outline-none focus:border-[#6E1F2F]";
 
+const subscribeDesktopViewport = (cb: () => void) => {
+  if (typeof window === "undefined") return () => {};
+  const mql = window.matchMedia("(min-width: 1024px)");
+  mql.addEventListener("change", cb);
+  return () => mql.removeEventListener("change", cb);
+};
+const getDesktopViewportSnapshot = () =>
+  typeof window !== "undefined" && window.innerWidth >= 1024;
+const getDesktopViewportServerSnapshot = () => false;
+
 function StudioInner() {
   const sp = useSearchParams();
   const s = useInvite();
   const cfg = s.config;
 
+  const isDesktopViewport = useSyncExternalStore(
+    subscribeDesktopViewport,
+    getDesktopViewportSnapshot,
+    getDesktopViewportServerSnapshot
+  );
   const [tab, setTab] = useState<TabId>("couple");
-  const [view, setView] = useState<"mobile" | "desktop">("mobile");
+  const [viewOverride, setViewOverride] = useState<"mobile" | "desktop" | null>(
+    null
+  );
+  const view = viewOverride ?? (isDesktopViewport ? "desktop" : "mobile");
+  const [mobilePane, setMobilePane] = useState<"editor" | "preview">("editor");
   const [copied, setCopied] = useState(false);
   const [publishedOpen, setPublishedOpen] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState("");
@@ -198,8 +217,30 @@ function StudioInner() {
 
   return (
     <div className="flex min-h-[calc(100dvh-65px)] flex-col md:h-[calc(100dvh-65px)] md:flex-row md:overflow-hidden">
+      {/* Mobile Pane Switcher so Editor & Live Preview stay 1 tap apart on phones */}
+      <div className="sticky top-[64px] z-30 flex items-center gap-2 border-b hairline bg-white/95 px-4 py-2 backdrop-blur md:hidden">
+        <button
+          type="button"
+          onClick={() => setMobilePane("editor")}
+          className={`flex-1 rounded-full py-2 font-ui text-xs font-bold uppercase tracking-wider transition-colors ${
+            mobilePane === "editor" ? "bg-[#161412] text-white" : "bg-[#F0EAE1] text-[#161412]"
+          }`}
+        >
+          Customize
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobilePane("preview")}
+          className={`flex-1 rounded-full py-2 font-ui text-xs font-bold uppercase tracking-wider transition-colors ${
+            mobilePane === "preview" ? "bg-[#6E1F2F] text-white" : "bg-[#F0EAE1] text-[#161412]"
+          }`}
+        >
+          Live Preview
+        </button>
+      </div>
+
       {/* LEFT: 7-tab editor */}
-      <aside className="flex w-full shrink-0 flex-col border-b hairline bg-white md:w-[350px] md:border-b-0 md:border-r lg:w-[420px]">
+      <aside className={`${mobilePane === "editor" ? "flex" : "hidden"} md:flex w-full shrink-0 flex-col border-b hairline bg-white md:w-[350px] md:border-b-0 md:border-r lg:w-[420px]`}>
         <div className="border-b hairline p-4">
           <div className="flex items-center justify-between">
             <span className="font-ui text-[10px] font-bold uppercase tracking-[0.22em] text-[#6E655F]">
@@ -260,7 +301,7 @@ function StudioInner() {
             >
               {tab === "couple" && (
                 <div className="space-y-3.5">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Field label="Groom / Honoree 1">
                       <input
                         className={inputCls}
@@ -290,7 +331,7 @@ function StudioInner() {
                       onChange={(e) => s.patchCouple({ brideParents: e.target.value })}
                     />
                   </Field>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Field label="Date display label">
                       <input
                         className={inputCls}
@@ -308,7 +349,7 @@ function StudioInner() {
                       />
                     </Field>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Field label="Wedding ISO date/time">
                       <input
                         type="datetime-local"
@@ -498,7 +539,7 @@ function StudioInner() {
                         />
                         <input
                           aria-label="Event name"
-                          className="font-display flex-1 bg-transparent text-lg font-bold outline-none"
+                          className="font-display min-w-0 flex-1 bg-transparent text-lg font-bold outline-none"
                           value={f.name}
                           onChange={(e) => {
                             const next = [...cfg.functions];
@@ -946,7 +987,7 @@ function StudioInner() {
       </aside>
 
       {/* CENTER: Live Phone/Desktop Stage + State Jumpers */}
-      <div className="flex flex-1 flex-col bg-[#E9E2D6] paper-grain">
+      <div className={`${mobilePane === "preview" ? "flex" : "hidden"} md:flex flex-1 flex-col bg-[#E9E2D6] paper-grain`}>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b hairline bg-white/80 px-4 py-2.5 backdrop-blur">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="font-ui mr-1 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#6E655F]">
@@ -957,7 +998,7 @@ function StudioInner() {
                 key={j.id}
                 type="button"
                 onClick={() => jumpToSection(j.id)}
-                className="rounded-full border hairline bg-white px-2.5 py-1 font-ui text-[10px] font-bold uppercase tracking-wider hover:bg-[#161412] hover:text-white"
+                className="rounded-full border hairline bg-white px-2.5 py-1 font-ui text-[10px] font-bold uppercase tracking-wider transition-colors hover:bg-[#161412] hover:text-white"
               >
                 {j.label}
               </button>
@@ -968,15 +1009,15 @@ function StudioInner() {
               type="button"
               disabled={publishing}
               onClick={handlePublish}
-              className="hidden rounded-full bg-[#6E1F2F] px-3.5 py-1.5 font-ui text-[11px] font-bold uppercase tracking-wider text-white disabled:opacity-50 sm:inline-flex items-center gap-1"
+              className="hidden rounded-full bg-[#6E1F2F] px-3.5 py-1.5 font-ui text-[11px] font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#161412] disabled:opacity-50 sm:inline-flex items-center gap-1"
             >
               <QrCode size={12} /> {publishing ? "Publishing…" : "Publish"}
             </button>
             <div className="flex gap-1 rounded-full border hairline bg-white p-1">
               <button
                 type="button"
-                onClick={() => setView("mobile")}
-                className={`flex items-center gap-1 rounded-full px-3 py-1 font-ui text-[11px] font-bold ${
+                onClick={() => setViewOverride("mobile")}
+                className={`flex items-center gap-1 rounded-full px-3 py-1 font-ui text-[11px] font-bold transition-colors ${
                   view === "mobile" ? "bg-[#161412] text-white" : ""
                 }`}
               >
@@ -984,8 +1025,8 @@ function StudioInner() {
               </button>
               <button
                 type="button"
-                onClick={() => setView("desktop")}
-                className={`flex items-center gap-1 rounded-full px-3 py-1 font-ui text-[11px] font-bold ${
+                onClick={() => setViewOverride("desktop")}
+                className={`flex items-center gap-1 rounded-full px-3 py-1 font-ui text-[11px] font-bold transition-colors ${
                   view === "desktop" ? "bg-[#161412] text-white" : ""
                 }`}
               >
@@ -995,12 +1036,12 @@ function StudioInner() {
           </div>
         </div>
 
-        <div ref={stageScrollRef} className="scrollbar-thin flex-1 overflow-y-auto p-5">
+        <div ref={stageScrollRef} className="scrollbar-thin flex-1 overflow-y-auto p-3 sm:p-5">
           <div
-            className={`mx-auto overflow-hidden bg-white shadow-[0_40px_80px_-30px_rgba(22,20,18,0.45)] transition-all ${
+            className={`mx-auto overflow-hidden bg-white shadow-[0_40px_80px_-30px_rgba(22,20,18,0.45)] transition-all duration-300 ${
               view === "mobile"
-                ? "max-w-[400px] rounded-[2.2rem] border-[8px] border-[#161412]"
-                : "max-w-4xl rounded-3xl border hairline"
+                ? "max-w-[390px] rounded-[2.2rem] border-4 sm:border-[8px] border-[#161412]"
+                : "max-w-5xl rounded-3xl border hairline"
             }`}
           >
             <InviteRenderer

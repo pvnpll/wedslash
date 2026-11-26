@@ -127,9 +127,10 @@ export default function RsvpForm({
       <motion.div
         initial={{ opacity: 0, scale: 0.94 }}
         animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 24 }}
         role="status"
         aria-live="polite"
-        className="mx-auto w-full max-w-md rounded-3xl bg-[#161412] p-8 text-center text-white"
+        className={`mx-auto w-full ${compact ? "" : "max-w-md @2xl:max-w-none"} rounded-3xl bg-[#161412] p-6 sm:p-8 text-center text-white`}
       >
         <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#2E7D32]">
           <Check size={26} />
@@ -194,7 +195,7 @@ export default function RsvpForm({
   ];
 
   return (
-    <div className={`mx-auto w-full ${compact ? "" : "max-w-md"} px-6`}>
+    <div className={`mx-auto w-full ${compact ? "" : "max-w-md @2xl:max-w-none @2xl:px-0"} px-4 sm:px-6`}>
       <p className="text-center font-ui text-[11px] font-semibold uppercase tracking-[0.28em] text-[#6E655F]">
         {subHeading}
       </p>
@@ -204,7 +205,7 @@ export default function RsvpForm({
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="mt-5 space-y-4 rounded-3xl border hairline bg-white p-5 shadow-sm"
+        className="mt-5 space-y-4 rounded-3xl border hairline bg-white p-4 sm:p-5 shadow-sm"
       >
         <div>
           <label
@@ -416,17 +417,26 @@ export default function RsvpForm({
         </div>
 
         <div aria-live="polite" className="min-h-[20px]">
-          {errorMsg && (
-            <p className="flex items-center gap-1.5 font-ui text-xs font-semibold text-[#b91c1c]">
-              <AlertCircle size={14} className="shrink-0" /> {errorMsg}
-            </p>
-          )}
+          <AnimatePresence>
+            {errorMsg && (
+              <motion.p
+                key="rsvp-error"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-1.5 font-ui text-xs font-semibold text-[#b91c1c]"
+              >
+                <AlertCircle size={14} className="shrink-0" /> {errorMsg}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        <div className="grid grid-cols-1 gap-2.5 pt-1 sm:grid-cols-2">
           <button
             type="submit"
-            className="font-ui min-h-[46px] rounded-full bg-[#161412] py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#6E1F2F]"
+            className="font-ui min-h-[46px] rounded-full bg-[#161412] py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#6E1F2F]"
           >
             Submit RSVP
           </button>

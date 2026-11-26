@@ -1,5 +1,6 @@
 "use client";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import Countdown from "../Countdown";
 
@@ -46,6 +47,7 @@ function ScratchCardComponent({
   primary = "#6E1F2F",
   onReveal,
 }: ScratchCardProps) {
+  const prefersReduced = useReducedMotion() ?? false;
   const [clearedMap, setClearedMap] = useState<Record<string, boolean>>({});
   const [forcedReveal, setForcedReveal] = useState(false);
   const firedRef = useRef(false);
@@ -119,7 +121,7 @@ function ScratchCardComponent({
   const hasValidTarget = Boolean(target && !Number.isNaN(Date.parse(target)));
 
   return (
-    <div className="mx-auto w-full max-w-md px-6 text-center">
+    <div className="mx-auto w-full max-w-md @2xl:max-w-xl px-4 sm:px-6 text-center">
       <p className="font-ui text-[11px] font-semibold uppercase tracking-[0.28em] text-[#6E655F]">
         ✦ Scratch to reveal the date ✦
       </p>
@@ -137,7 +139,7 @@ function ScratchCardComponent({
           />
         </div>
       ) : (
-        <div className="mt-4 grid grid-cols-3 gap-3">
+        <div className="mt-4 grid grid-cols-3 gap-2.5 sm:gap-3 @2xl:gap-5">
           {cards.map((c) => (
             <FoilScratchSurface
               key={c.id}
@@ -157,23 +159,34 @@ function ScratchCardComponent({
         <p className="font-editorial mt-4 text-lg italic text-[#161412]/75">{venue}</p>
       )}
 
-      <div className="mt-4 flex flex-col items-center gap-2.5">
-        {!done ? (
-          <button
-            type="button"
-            onClick={handleAccessibleReveal}
-            className="font-ui inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#161412] shadow-sm transition hover:bg-[#161412] hover:text-white"
-          >
-            Reveal Date
-          </button>
-        ) : (
-          <p
-            className="font-ui inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white"
-            style={{ background: primary }}
-          >
-            <Sparkles size={13} /> Date revealed — see you there
-          </p>
-        )}
+      <div className="mt-4 flex min-h-[38px] flex-col items-center justify-center gap-2.5">
+        <AnimatePresence mode="wait">
+          {!done ? (
+            <motion.button
+              key="scratch-reveal-btn"
+              type="button"
+              onClick={handleAccessibleReveal}
+              initial={prefersReduced ? false : { opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={prefersReduced ? undefined : { opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="font-ui inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-black/15 bg-white px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#161412] shadow-sm transition-colors hover:bg-[#161412] hover:text-white"
+            >
+              Reveal Date
+            </motion.button>
+          ) : (
+            <motion.p
+              key="scratch-revealed-pill"
+              initial={prefersReduced ? false : { opacity: 0, scale: 0.94, y: 6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 320, damping: 24 }}
+              className="font-ui inline-flex min-h-[38px] items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white"
+              style={{ background: primary }}
+            >
+              <Sparkles size={13} /> Date revealed — see you there
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
 
       {done && hasValidTarget && target && (
@@ -364,8 +377,8 @@ function FoilScratchSurface({
     return (
       <div
         ref={wrapRef}
-        className="relative w-64 select-none overflow-hidden"
-        style={{ height: 236, touchAction: "none" }}
+        className="relative w-56 sm:w-64 @2xl:w-72 aspect-[256/236] select-none overflow-hidden"
+        style={{ touchAction: "none" }}
       >
         {/* Revealed Heart Content */}
         <svg viewBox="0 0 240 220" className="absolute inset-0 h-full w-full drop-shadow-lg" aria-hidden="true">

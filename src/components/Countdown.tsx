@@ -39,7 +39,7 @@ export default function Countdown({ target, title, venue, dark = false }: { targ
     { v: d, l: "Days" }, { v: h, l: "Hrs" }, { v: m, l: "Mins" }, { v: s, l: "Secs" },
   ];
   return (
-    <div className="mx-auto w-full max-w-[330px] px-2 text-center">
+    <div className="mx-auto w-full max-w-[330px] @2xl:max-w-md px-2 text-center">
       <p className={`font-ui text-[11px] font-semibold uppercase tracking-[0.26em] ${dark ? "text-white/60" : "text-[#6E655F]"}`}>The celebration begins in</p>
       <div className="mt-3 grid grid-cols-4 gap-1.5 sm:gap-2.5">
         {cells.map((c) => (

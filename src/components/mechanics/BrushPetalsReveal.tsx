@@ -1,6 +1,6 @@
 "use client";
 import { memo, useCallback, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import Countdown from "../Countdown";
 
@@ -164,7 +164,7 @@ function BrushPetalsRevealComponent({
   const hasValidTarget = Boolean(target && !Number.isNaN(Date.parse(target)));
 
   return (
-    <div className="mx-auto w-full max-w-md px-5 text-center">
+    <div className="mx-auto w-full max-w-md @2xl:max-w-xl px-4 sm:px-5 text-center">
       <p className="font-ui text-[11px] font-semibold uppercase tracking-[0.28em] text-[#6E655F]">
         ✦ Brush the petals to reveal ✦
       </p>
@@ -179,7 +179,7 @@ function BrushPetalsRevealComponent({
         }}
         style={{ touchAction: "none" }}
         className={`relative mt-4 flex ${
-          compact ? "min-h-[210px]" : "min-h-[240px]"
+          compact ? "min-h-[210px]" : "min-h-[240px] @2xl:min-h-[268px]"
         } w-full cursor-grab select-none flex-col items-center justify-center overflow-hidden rounded-3xl border bg-[#FFFDF6] px-6 py-7 shadow-xl active:cursor-grabbing`}
       >
         {/* Decorative border frame */}
@@ -254,25 +254,34 @@ function BrushPetalsRevealComponent({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col items-center gap-2">
-        {!revealed ? (
-          <button
-            type="button"
-            onClick={brushAll}
-            className="font-ui inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#161412] shadow-sm transition hover:bg-[#161412] hover:text-white"
-          >
-            Brush all petals
-          </button>
-        ) : (
-          <motion.p
-            initial={prefersReduced ? false : { opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-ui inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white"
-            style={{ background: primary }}
-          >
-            <Sparkles size={13} /> Date uncovered
-          </motion.p>
-        )}
+      <div className="mt-4 flex min-h-[38px] flex-col items-center justify-center gap-2">
+        <AnimatePresence mode="wait">
+          {!revealed ? (
+            <motion.button
+              key="brush-all"
+              type="button"
+              onClick={brushAll}
+              initial={prefersReduced ? false : { opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={prefersReduced ? undefined : { opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="font-ui inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-black/15 bg-white px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#161412] shadow-sm transition-colors hover:bg-[#161412] hover:text-white"
+            >
+              Brush all petals
+            </motion.button>
+          ) : (
+            <motion.p
+              key="date-uncovered"
+              initial={prefersReduced ? false : { opacity: 0, scale: 0.94, y: 6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 320, damping: 24 }}
+              className="font-ui inline-flex min-h-[38px] items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white"
+              style={{ background: primary }}
+            >
+              <Sparkles size={13} /> Date uncovered
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
 
       {hasValidTarget && (

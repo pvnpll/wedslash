@@ -1,5 +1,5 @@
 "use client";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { memo, useEffect, useState } from "react";
 import { Camera, Sparkles } from "lucide-react";
 import Countdown from "../Countdown";
@@ -62,7 +62,7 @@ function PolaroidDevelopComponent({
   const hasValidTarget = Boolean(target && !Number.isNaN(Date.parse(target)));
 
   return (
-    <div className="mx-auto w-full max-w-sm px-5 text-center">
+    <div className="mx-auto w-full max-w-sm @2xl:max-w-lg px-4 sm:px-5 text-center">
       <p className="font-ui text-[11px] font-semibold uppercase tracking-[0.28em] text-[#6E655F]">
         ✦ Tap the Polaroid to develop ✦
       </p>
@@ -75,9 +75,10 @@ function PolaroidDevelopComponent({
             ? undefined
             : { rotate: isRevealing ? 0 : -2, scale: isRevealing ? 1 : 0.98 }
         }
-        whileHover={stage === "dark" && !prefersReduced ? { rotate: 0, scale: 1.01 } : undefined}
-        transition={{ type: "spring", stiffness: 200, damping: 22 }}
-        className="relative mx-auto mt-5 block w-full max-w-[300px] rounded-sm border border-black/10 bg-[#FAF8F2] p-3.5 pb-6 text-left shadow-[0_26px_55px_-18px_rgba(22,20,18,0.45)] outline-none"
+        whileHover={stage === "dark" && !prefersReduced ? { rotate: 0, scale: 1.015 } : undefined}
+        whileTap={stage === "dark" && !prefersReduced ? { scale: 0.98 } : undefined}
+        transition={{ type: "spring", stiffness: 220, damping: 24 }}
+        className="relative mx-auto mt-5 block w-full max-w-[290px] @2xl:max-w-[340px] rounded-sm border border-black/10 bg-[#FAF8F2] p-3.5 pb-6 text-left shadow-[0_26px_55px_-18px_rgba(22,20,18,0.45)] outline-none"
         aria-label={isRevealing ? `${groom} and ${bride} Polaroid` : "Tap to develop Polaroid"}
       >
         {/* Subtle vintage masking tape */}
@@ -89,7 +90,7 @@ function PolaroidDevelopComponent({
         {/* Photo Aperture — Pure GPU opacity & scale transition (no slow CSS filter blur) */}
         <div
           className={`relative overflow-hidden bg-[#1A1614] ${
-            compact ? "h-52" : "h-60"
+            compact ? "h-52" : "h-60 @2xl:h-68"
           } w-full`}
         >
           <div
@@ -154,27 +155,39 @@ function PolaroidDevelopComponent({
           />
 
           {/* Camera shutter flash */}
-          {flashActive && (
-            <motion.div
-              initial={{ opacity: 0.95 }}
-              animate={{ opacity: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className="pointer-events-none absolute inset-0 bg-white"
-              aria-hidden="true"
-            />
-          )}
+          <AnimatePresence>
+            {flashActive && (
+              <motion.div
+                key="polaroid-flash"
+                initial={{ opacity: 0.95 }}
+                animate={{ opacity: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="pointer-events-none absolute inset-0 bg-white"
+                aria-hidden="true"
+              />
+            )}
+          </AnimatePresence>
 
           {/* Tap prompt overlay when dark */}
-          {stage === "dark" && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/25 text-white">
-              <span className="grid h-12 w-12 place-items-center rounded-full border border-white/40 bg-black/60">
-                <Camera size={20} />
-              </span>
-              <span className="font-ui rounded-full bg-black/65 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em]">
-                Tap to develop
-              </span>
-            </div>
-          )}
+          <AnimatePresence>
+            {stage === "dark" && (
+              <motion.div
+                key="polaroid-prompt"
+                initial={{ opacity: 1 }}
+                exit={prefersReduced ? { opacity: 0 } : { opacity: 0, scale: 0.94 }}
+                transition={{ duration: 0.25 }}
+                className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/25 text-white"
+              >
+                <span className="grid h-12 w-12 place-items-center rounded-full border border-white/40 bg-black/60">
+                  <Camera size={20} />
+                </span>
+                <span className="font-ui rounded-full bg-black/65 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em]">
+                  Tap to develop
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Bottom Polaroid handwritten border */}
@@ -194,14 +207,22 @@ function PolaroidDevelopComponent({
         </div>
       </motion.button>
 
-      {isDeveloped && (
-        <p
-          className="font-ui mt-4 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white"
-          style={{ background: primary }}
-        >
-          <Sparkles size={13} /> Captured forever
-        </p>
-      )}
+      <div className="mt-4 min-h-[34px]">
+        <AnimatePresence>
+          {isDeveloped && (
+            <motion.p
+              key="polaroid-captured"
+              initial={prefersReduced ? false : { opacity: 0, scale: 0.94, y: 6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 320, damping: 24 }}
+              className="font-ui inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white"
+              style={{ background: primary }}
+            >
+              <Sparkles size={13} /> Captured forever
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
 
       {hasValidTarget && (
         <div className="mt-5">

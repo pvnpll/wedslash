@@ -1,6 +1,6 @@
 "use client";
 import { memo, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
 import { Sparkles, Star } from "lucide-react";
 import GateRevealedCard from "./GateRevealedCard";
 
@@ -22,9 +22,8 @@ const STARS = [
 ] as const;
 
 /**
- * Constellation Trace Gate: slide across the night sky to connect four glowing
- * stars (or tap them in sequence) — completing the constellation fires a
- * meteor streak that parts the night sky into the revealed celebration card.
+ * Constellation Trace Gate with animated SVG pathLength threads,
+ * spring-smoothed live silk beam without per-move React lag, and desktop expansion.
  */
 function ConstellationGateComponent({
   groom,
@@ -37,11 +36,14 @@ function ConstellationGateComponent({
 }: ConstellationGateProps) {
   const prefersReduced = useReducedMotion() ?? false;
   const [connectedCount, setConnectedCount] = useState(1);
-  const [pointerPct, setPointerPct] = useState<{ x: number; y: number } | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
 
   const skyRef = useRef<HTMLDivElement>(null);
+  const rawX = useMotionValue<number>(STARS[0].x);
+  const rawY = useMotionValue<number>(STARS[0].y);
+  const smoothX = useSpring(rawX, { stiffness: 320, damping: 28 });
+  const smoothY = useSpring(rawY, { stiffness: 320, damping: 28 });
 
   const headline =
     groom && bride ? `${groom} & ${bride}` : groom || bride || "Together Under One Sky";
@@ -51,7 +53,6 @@ function ConstellationGateComponent({
     if (unlocked) return;
     setConnectedCount(STARS.length);
     setDrawing(false);
-    setPointerPct(null);
     setUnlocked(true);
     onOpen?.();
   };
@@ -84,7 +85,7 @@ function ConstellationGateComponent({
 
   return (
     <div
-      className="relative flex h-full min-h-[600px] w-full flex-col items-center justify-center overflow-hidden px-5 py-8"
+      className="relative flex h-full min-h-[min(580px,82dvh)] @2xl:min-h-[620px] w-full flex-col items-center justify-center overflow-hidden px-4 py-8 @2xl:px-10"
       style={{
         background: "radial-gradient(circle at 50% 25%, #1D3557 0%, #091322 85%)",
       }}
@@ -98,13 +99,13 @@ function ConstellationGateComponent({
             : { clipPath: "circle(0% at 80% 26%)", opacity: 0 }
         }
         transition={{ duration: prefersReduced ? 0.2 : 0.9, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute inset-0 z-10 flex items-center justify-center px-5"
+        className="absolute inset-0 z-10 flex items-center justify-center px-4 @2xl:px-10"
         style={{
           pointerEvents: unlocked ? "auto" : "none",
           background: "radial-gradient(circle at 50% 20%, #182947 0%, #091322 100%)",
         }}
       >
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-md @2xl:max-w-2xl @4xl:max-w-3xl">
           <GateRevealedCard
             guestName={guestName}
             headline={headline}
@@ -114,10 +115,10 @@ function ConstellationGateComponent({
             surface="starlight"
             keepsake={
               <span
-                className="grid h-12 w-12 place-items-center rounded-full border bg-white/10"
+                className="grid h-14 w-14 @2xl:h-20 @2xl:w-20 place-items-center rounded-full border bg-white/10"
                 style={{ borderColor: gold }}
               >
-                <Sparkles size={20} style={{ color: gold }} />
+                <Sparkles size={22} className="@2xl:scale-125" style={{ color: gold }} />
               </span>
             }
             revealed={unlocked}
@@ -131,7 +132,7 @@ function ConstellationGateComponent({
         initial={false}
         animate={{ opacity: unlocked ? 0 : 1, scale: unlocked ? 1.06 : 1 }}
         transition={{ duration: 0.45 }}
-        className="relative z-20 flex w-full max-w-sm flex-col items-center"
+        className="relative z-20 flex w-full max-w-sm @2xl:max-w-xl flex-col items-center"
         style={{ pointerEvents: unlocked ? "none" : "auto" }}
       >
         <div
@@ -149,7 +150,8 @@ function ConstellationGateComponent({
             setDrawing(true);
             const pt = toSkyPct(e.clientX, e.clientY);
             if (pt) {
-              setPointerPct(pt);
+              rawX.set(pt.x);
+              rawY.set(pt.y);
               checkNextStar(pt.x, pt.y);
             }
           }}
@@ -157,27 +159,30 @@ function ConstellationGateComponent({
             if (!drawing || unlocked) return;
             const pt = toSkyPct(e.clientX, e.clientY);
             if (pt) {
-              setPointerPct(pt);
+              rawX.set(pt.x);
+              rawY.set(pt.y);
               checkNextStar(pt.x, pt.y);
             }
           }}
           onPointerUp={() => {
             setDrawing(false);
-            setPointerPct(null);
+            rawX.set(lastStar.x);
+            rawY.set(lastStar.y);
           }}
           onPointerCancel={() => {
             setDrawing(false);
-            setPointerPct(null);
+            rawX.set(lastStar.x);
+            rawY.set(lastStar.y);
           }}
-          className="relative mt-4 h-72 w-full overflow-hidden rounded-3xl border border-white/15 bg-[#0A1628]/80 shadow-2xl"
+          className="relative mt-4 h-72 @2xl:h-80 w-full overflow-hidden rounded-3xl border border-white/15 bg-[#0A1628]/80 shadow-2xl"
           style={{ touchAction: "none" }}
         >
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
-            {/* Completed constellation lines */}
+            {/* Completed constellation lines draw smoothly with pathLength */}
             {STARS.slice(0, Math.max(0, connectedCount - 1)).map((s, idx) => {
               const next = STARS[idx + 1];
               return (
-                <line
+                <motion.line
                   key={s.id}
                   x1={s.x}
                   y1={s.y}
@@ -186,11 +191,13 @@ function ConstellationGateComponent({
                   stroke={gold}
                   strokeWidth="1.2"
                   strokeLinecap="round"
+                  initial={prefersReduced ? false : { pathLength: 0, opacity: 0.4 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: prefersReduced ? 0.1 : 0.42, ease: [0.22, 1, 0.36, 1] }}
                 />
               );
             })}
 
-            {/* Dotted guide path to next star */}
             {connectedCount < STARS.length && (
               <line
                 x1={lastStar.x}
@@ -203,21 +210,25 @@ function ConstellationGateComponent({
               />
             )}
 
-            {/* Live pointer silk line while dragging */}
-            {drawing && pointerPct && connectedCount < STARS.length && (
-              <line
-                x1={lastStar.x}
-                y1={lastStar.y}
-                x2={pointerPct.x}
-                y2={pointerPct.y}
-                stroke={gold}
-                strokeOpacity="0.85"
-                strokeWidth="1"
-              />
-            )}
+            <AnimatePresence>
+              {drawing && connectedCount < STARS.length && (
+                <motion.line
+                  key="live-beam"
+                  x1={lastStar.x}
+                  y1={lastStar.y}
+                  x2={smoothX}
+                  y2={smoothY}
+                  stroke={gold}
+                  strokeWidth="1.05"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.85 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.16 }}
+                />
+              )}
+            </AnimatePresence>
           </svg>
 
-          {/* Star Waypoints */}
           {STARS.map((s, idx) => {
             const lit = idx < connectedCount;
             const isNext = idx === connectedCount;
@@ -241,11 +252,11 @@ function ConstellationGateComponent({
                 <motion.span
                   animate={
                     isNext && !prefersReduced
-                      ? { scale: [1, 1.35, 1], opacity: [0.7, 1, 0.7] }
+                      ? { scale: [1, 1.32, 1], opacity: [0.75, 1, 0.75] }
                       : { scale: 1, opacity: 1 }
                   }
                   transition={{ repeat: Infinity, duration: 1.4 }}
-                  className="grid h-8 w-8 place-items-center rounded-full border"
+                  className="grid h-9 w-9 place-items-center rounded-full border transition-colors duration-300"
                   style={{
                     borderColor: lit || isNext ? gold : "rgba(255,255,255,0.25)",
                     background: lit ? gold : "rgba(15,28,50,0.9)",
@@ -266,7 +277,7 @@ function ConstellationGateComponent({
           type="button"
           onClick={finishUnlock}
           tabIndex={unlocked ? -1 : 0}
-          className="font-ui mt-4 rounded-full bg-[#D9A441] px-5 py-2 text-[11px] font-bold uppercase tracking-[0.15em] text-[#091322] shadow-lg transition hover:bg-white"
+          className="font-ui mt-4 rounded-full bg-[#D9A441] px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.15em] text-[#091322] shadow-lg transition hover:bg-white"
         >
           {cta}
         </button>

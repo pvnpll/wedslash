@@ -32,9 +32,22 @@ function ParticleCanvasComponent({ type, density = 24, className = "" }: Props) 
     let isVisible = true;
     let isPageVisible = !document.hidden;
     let running = false;
+    let lastTime = 0;
 
-    let w = (canvas.width = canvas.offsetWidth || 320);
-    let h = (canvas.height = canvas.offsetHeight || 480);
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let w = canvas.offsetWidth || 320;
+    let h = canvas.offsetHeight || 480;
+
+    const applyCanvasSize = (nw: number, nh: number) => {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = nw;
+      h = nh;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    applyCanvasSize(w, h);
 
     const colors = PALETTES[type] ?? PALETTES["gold-dust"];
     const isCircleType = type === "stars" || type === "gold-dust";
@@ -52,15 +65,16 @@ function ParticleCanvasComponent({ type, density = 24, className = "" }: Props) 
       tw: Math.random() * Math.PI * 2,
     }));
 
-    const drawFrame = () => {
+    const drawFrame = (dt: number) => {
+      const step = dt * 60;
       ctx.clearRect(0, 0, w, h);
       for (let i = 0; i < parts.length; i++) {
         const p = parts[i];
         if (!reduced) {
-          p.y += p.vy;
-          p.sway += p.swaySpeed;
-          p.rot += p.rotSpeed;
-          p.tw += 0.025;
+          p.y += p.vy * step;
+          p.sway += p.swaySpeed * step;
+          p.rot += p.rotSpeed * step;
+          p.tw += 0.025 * step;
           if (p.y > h + 12) {
             p.y = -12;
             p.x = Math.random() * w;
@@ -81,12 +95,15 @@ function ParticleCanvasComponent({ type, density = 24, className = "" }: Props) 
       ctx.globalAlpha = 1;
     };
 
-    const tick = () => {
+    const tick = (now: number) => {
       if (!isVisible || !isPageVisible) {
         running = false;
+        lastTime = 0;
         return;
       }
-      drawFrame();
+      const dt = lastTime ? Math.max(0, Math.min((now - lastTime) / 1000, 0.032)) : 1 / 60;
+      lastTime = now;
+      drawFrame(dt);
       if (!reduced) {
         raf = requestAnimationFrame(tick);
       } else {
@@ -97,8 +114,9 @@ function ParticleCanvasComponent({ type, density = 24, className = "" }: Props) 
     const startLoop = () => {
       if (running || !isVisible || !isPageVisible) return;
       running = true;
+      lastTime = 0;
       if (reduced) {
-        drawFrame();
+        drawFrame(0);
         running = false;
       } else {
         raf = requestAnimationFrame(tick);
@@ -107,6 +125,7 @@ function ParticleCanvasComponent({ type, density = 24, className = "" }: Props) 
 
     const stopLoop = () => {
       running = false;
+      lastTime = 0;
       if (raf) {
         cancelAnimationFrame(raf);
         raf = 0;
@@ -124,20 +143,17 @@ function ParticleCanvasComponent({ type, density = 24, className = "" }: Props) 
     );
     io.observe(canvas);
 
-    let resizeTimer = 0;
-    const onResize = () => {
-      window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(() => {
-        if (!canvas) return;
-        const nw = canvas.offsetWidth;
-        const nh = canvas.offsetHeight;
-        if (nw > 0 && nh > 0 && (nw !== w || nh !== h)) {
-          w = canvas.width = nw;
-          h = canvas.height = nh;
-          if (reduced) drawFrame();
-        }
-      }, 120);
-    };
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      const nw = Math.round(entry?.contentRect.width || canvas.offsetWidth);
+      const nh = Math.round(entry?.contentRect.height || canvas.offsetHeight);
+      const nextDpr = Math.min(window.devicePixelRatio || 1, 2);
+      if (nw > 0 && nh > 0 && (nw !== w || nh !== h || nextDpr !== dpr)) {
+        applyCanvasSize(nw, nh);
+        if (reduced) drawFrame(0);
+      }
+    });
+    ro.observe(canvas);
 
     const onVisibilityChange = () => {
       isPageVisible = !document.hidden;
@@ -145,15 +161,13 @@ function ParticleCanvasComponent({ type, density = 24, className = "" }: Props) 
       else stopLoop();
     };
 
-    window.addEventListener("resize", onResize, { passive: true });
     document.addEventListener("visibilitychange", onVisibilityChange);
     startLoop();
 
     return () => {
       stopLoop();
       io.disconnect();
-      window.clearTimeout(resizeTimer);
-      window.removeEventListener("resize", onResize);
+      ro.disconnect();
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [type, density]);

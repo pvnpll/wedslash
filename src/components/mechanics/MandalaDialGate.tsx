@@ -1,6 +1,6 @@
 "use client";
 import { memo, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useMotionValue, useMotionValueEvent, useReducedMotion, useSpring } from "framer-motion";
 import { RotateCw, Sparkles } from "lucide-react";
 import GateRevealedCard from "./GateRevealedCard";
 
@@ -18,9 +18,9 @@ export interface MandalaDialGateProps {
 const TARGET_DEGREES = 165;
 
 /**
- * Cryptex Mandala Aperture Gate: twist the golden outer geometric ring clockwise
- * around the center hub (0° -> 180°) until the temple compass aligns, snapping open
- * a circular aperture iris onto the illuminated invitation.
+ * Cryptex Mandala Aperture Gate: uses Framer useMotionValue + useSpring
+ * for zero-jitter circular turning, springs back smoothly if released early,
+ * and pauses briefly so users watch the compass lock at 180° before opening.
  */
 function MandalaDialGateComponent({
   groom,
@@ -33,14 +33,18 @@ function MandalaDialGateComponent({
   onOpen,
 }: MandalaDialGateProps) {
   const prefersReduced = useReducedMotion() ?? false;
-  const [angle, setAngle] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const [pct, setPct] = useState(0);
   const [unlocked, setUnlocked] = useState(false);
 
   const wheelRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
   const lastRadRef = useRef(0);
-  const angleRef = useRef(0);
+  const rawAngle = useMotionValue(0);
+  const smoothAngle = useSpring(rawAngle, { stiffness: 280, damping: 26, mass: 0.85 });
+
+  useMotionValueEvent(rawAngle, "change", (latest) => {
+    setPct(Math.min(100, Math.round((latest / TARGET_DEGREES) * 100)));
+  });
 
   const headline =
     groom && bride ? `${groom} & ${bride}` : groom || bride || "Together in Celebration";
@@ -53,9 +57,8 @@ function MandalaDialGateComponent({
   const snapOpen = () => {
     if (unlocked) return;
     draggingRef.current = false;
-    setIsDragging(false);
-    angleRef.current = 180;
-    setAngle(180);
+    rawAngle.set(180);
+    setPct(100);
     setUnlocked(true);
     onOpen?.();
   };
@@ -76,24 +79,31 @@ function MandalaDialGateComponent({
     lastRadRef.current = currentRad;
 
     const deltaDeg = (deltaRad * 180) / Math.PI;
-    const next = Math.max(0, Math.min(180, angleRef.current + deltaDeg));
-    angleRef.current = next;
-    setAngle(next);
+    const next = Math.max(0, Math.min(180, rawAngle.get() + deltaDeg));
+    rawAngle.set(next);
     if (next >= TARGET_DEGREES) {
       snapOpen();
     }
   };
 
-  const pct = Math.min(100, Math.round((angle / TARGET_DEGREES) * 100));
+  const handleRelease = () => {
+    if (!draggingRef.current || unlocked) return;
+    draggingRef.current = false;
+    if (rawAngle.get() >= TARGET_DEGREES) {
+      snapOpen();
+    } else {
+      rawAngle.set(0);
+    }
+  };
 
   return (
     <div
-      className="relative flex h-full min-h-[600px] w-full flex-col items-center justify-center overflow-hidden px-5 py-8"
+      className="relative flex h-full min-h-[min(580px,82dvh)] @2xl:min-h-[620px] w-full flex-col items-center justify-center overflow-hidden px-4 py-8 @2xl:px-10"
       style={{
         background: `radial-gradient(circle at 50% 42%, ${gold}1F 0%, transparent 62%), linear-gradient(180deg, #07261C 0%, ${primary} 100%)`,
       }}
     >
-      {/* Revealed Card through Expanding Radial Aperture */}
+      {/* Aperture iris opens after dial noticeably locks at 180deg */}
       <motion.div
         initial={false}
         animate={
@@ -101,14 +111,18 @@ function MandalaDialGateComponent({
             ? { clipPath: "circle(145% at 50% 48%)", opacity: 1 }
             : { clipPath: "circle(0% at 50% 48%)", opacity: 0 }
         }
-        transition={{ duration: prefersReduced ? 0.2 : 0.88, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute inset-0 z-10 flex items-center justify-center px-5"
+        transition={{
+          duration: prefersReduced ? 0.2 : 0.88,
+          delay: unlocked && !prefersReduced ? 0.26 : 0,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+        className="absolute inset-0 z-10 flex items-center justify-center px-4 @2xl:px-10"
         style={{
           pointerEvents: unlocked ? "auto" : "none",
           background: "#F4EFE3",
         }}
       >
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-md @2xl:max-w-2xl @4xl:max-w-3xl">
           <GateRevealedCard
             guestName={guestName}
             headline={headline}
@@ -117,23 +131,22 @@ function MandalaDialGateComponent({
             gold={gold}
             keepsake={
               <span
-                className="grid h-12 w-12 place-items-center rounded-full border-2 font-display text-sm font-bold shadow-sm"
+                className="grid h-14 w-14 @2xl:h-20 @2xl:w-20 place-items-center rounded-full border-2 font-display text-sm @2xl:text-lg font-bold shadow-sm"
                 style={{ borderColor: gold, background: primary, color: gold }}
               >
                 {displayMonogram}
               </span>
             }
             revealed={unlocked}
-            delay={0.18}
+            delay={0.34}
           />
         </div>
       </motion.div>
 
-      {/* Interactive Mechanical Mandala Wheel */}
       <motion.div
         initial={false}
         animate={{ opacity: unlocked ? 0 : 1, scale: unlocked ? 1.15 : 1 }}
-        transition={{ duration: 0.45 }}
+        transition={{ duration: 0.42, delay: unlocked && !prefersReduced ? 0.24 : 0 }}
         className="relative z-20 flex flex-col items-center text-center"
         style={{ pointerEvents: unlocked ? "none" : "auto" }}
       >
@@ -144,7 +157,6 @@ function MandalaDialGateComponent({
           For · {guestName} · Align {pct}%
         </div>
 
-        {/* Target zenith marker */}
         <div className="mt-4 mb-1 h-2.5 w-2.5 rotate-45" style={{ background: gold }} aria-hidden="true" />
 
         <div
@@ -152,36 +164,26 @@ function MandalaDialGateComponent({
           onPointerDown={(e) => {
             if (unlocked || prefersReduced) return;
             draggingRef.current = true;
-            setIsDragging(true);
             lastRadRef.current = pointerAngleRad(e.clientX, e.clientY);
             e.currentTarget.setPointerCapture(e.pointerId);
           }}
           onPointerMove={handlePointerMove}
-          onPointerUp={() => {
-            draggingRef.current = false;
-            setIsDragging(false);
-          }}
-          onPointerCancel={() => {
-            draggingRef.current = false;
-            setIsDragging(false);
-          }}
+          onPointerUp={handleRelease}
+          onPointerCancel={handleRelease}
           className="relative grid h-64 w-64 cursor-grab select-none place-items-center active:cursor-grabbing"
           style={{ touchAction: "none" }}
         >
-          {/* Rotating Brass Cryptex Outer Ring */}
-          <svg
+          <motion.svg
             viewBox="0 0 220 220"
             className="h-64 w-64"
             style={{
-              transform: `rotate(${angle}deg)`,
-              transition: isDragging ? "none" : "transform 450ms cubic-bezier(0.22,1,0.36,1)",
+              rotate: prefersReduced ? 0 : smoothAngle,
               willChange: "transform",
             }}
             aria-hidden="true"
           >
             <circle cx="110" cy="110" r="102" stroke={gold} strokeWidth="2.5" strokeDasharray="6 6" fill="none" />
             <circle cx="110" cy="110" r="88" stroke={`${gold}99`} strokeWidth="1.2" fill="rgba(0,0,0,0.22)" />
-            {/* 8 compass petals */}
             {Array.from({ length: 8 }).map((_, i) => {
               const deg = i * 45;
               return (
@@ -190,11 +192,9 @@ function MandalaDialGateComponent({
                 </g>
               );
             })}
-            {/* Grip nub at bottom-start (moves to top zenith when turned 180deg!) */}
             <circle cx="110" cy="206" r="8" fill={gold} stroke="#07261C" strokeWidth="2.5" />
-          </svg>
+          </motion.svg>
 
-          {/* Center Stationary Monogram Button */}
           <button
             type="button"
             onClick={snapOpen}
@@ -214,7 +214,7 @@ function MandalaDialGateComponent({
           type="button"
           onClick={snapOpen}
           tabIndex={unlocked ? -1 : 0}
-          className="font-ui mt-4 inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-5 py-2 text-[11px] font-bold uppercase tracking-[0.15em] text-[#07261C] shadow-lg"
+          className="font-ui mt-4 inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.15em] text-[#07261C] shadow-lg transition hover:bg-white"
         >
           <Sparkles size={13} /> {cta}
         </button>

@@ -1,5 +1,5 @@
 "use client";
-import { motion, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import { memo, useState } from "react";
 import { ChevronDown, ChevronsRight, MoveHorizontal } from "lucide-react";
 import GateRevealedCard from "./GateRevealedCard";
@@ -18,14 +18,14 @@ export interface EnvelopeGateProps {
   onOpen?: () => void;
 }
 
+const SPRING_BOUNCE = { bounceStiffness: 340, bounceDamping: 26 };
+
 /**
- * Three tactile gesture gates sharing spatial depth behind every barrier:
- * - wax-envelope: swipe-to-unseal satin ribbon (or tap), flap hinges open and
- *   the card slides up seamlessly out of the receding envelope pocket.
- * - palace-doors: pull the brass bolt down to unlatch 3D swinging Jharokha doors
- *   over the pre-mounted invitation courtyard.
- * - curtain-reveal: drag the braided golden curtain cord down to part velvet drapes
- *   over the illuminated invitation card.
+ * Three tactile gesture gates with live continuous drag feedback, spring snapback
+ * when released early, container-responsive desktop scaling, and smooth GPU transitions:
+ * - wax-envelope: swipe-to-unseal satin ribbon -> flap hinges open & envelope recedes.
+ * - palace-doors: pull brass bolt down -> doors crack live via outer transform before swinging 3D open.
+ * - curtain-reveal: pull braided cord down -> velvet drapes part smoothly over pre-mounted card.
  */
 function EnvelopeGateComponent({
   variant = "wax-envelope",
@@ -43,13 +43,18 @@ function EnvelopeGateComponent({
   const prefersReduced = useReducedMotion() ?? false;
   const [opened, setOpened] = useState(false);
 
-  // Live pull values for continuous gesture feedback before threshold
   const swipeX = useMotionValue(0);
   const boltY = useMotionValue(0);
   const cordY = useMotionValue(0);
-  const ribbonOpacity = useTransform(swipeX, [0, 140], [1, 0]);
-  const doorGap = useTransform(boltY, [0, 68], [0, 14]);
-  const curtainPeek = useTransform(cordY, [0, 80], [0, 18]);
+
+  const smoothBoltY = useSpring(boltY, { stiffness: 320, damping: 28 });
+  const smoothCordY = useSpring(cordY, { stiffness: 320, damping: 28 });
+
+  const ribbonOpacity = useTransform(swipeX, [0, 130], [1, 0]);
+  const leftDoorPeek = useTransform(smoothBoltY, [0, 68], [0, -18]);
+  const rightDoorPeek = useTransform(smoothBoltY, [0, 68], [0, 18]);
+  const leftCurtainPeek = useTransform(smoothCordY, [0, 80], [0, -24]);
+  const rightCurtainPeek = useTransform(smoothCordY, [0, 80], [0, 24]);
 
   const displayMonogram =
     monogram ||
@@ -85,7 +90,7 @@ function EnvelopeGateComponent({
 
   return (
     <div
-      className="relative flex h-full min-h-[600px] w-full flex-col items-center justify-center overflow-hidden bg-[#FDF8EF] paper-grain px-5 py-8"
+      className="relative flex h-full min-h-[min(580px,82dvh)] @2xl:min-h-[620px] w-full flex-col items-center justify-center overflow-hidden bg-[#FDF8EF] paper-grain px-4 py-8 @2xl:px-10"
       style={{ perspective: 1400 }}
     >
       {/* Revealed card sits permanently in place behind doors/curtains, or blooms upward out of envelope */}
@@ -95,15 +100,17 @@ function EnvelopeGateComponent({
           variant === "wax-envelope"
             ? opened
               ? { y: 0, scale: 1, opacity: 1 }
-              : { y: 42, scale: 0.9, opacity: 0 }
+              : { y: 42, scale: 0.92, opacity: 0 }
             : { y: 0, scale: opened ? 1 : 0.97, opacity: 1 }
         }
         transition={{
-          duration: prefersReduced ? 0.15 : 0.85,
-          delay: variant === "wax-envelope" && opened && !prefersReduced ? 0.18 : 0,
-          ease: [0.22, 1, 0.36, 1],
+          type: prefersReduced ? "tween" : "spring",
+          stiffness: 170,
+          damping: 22,
+          duration: prefersReduced ? 0.16 : undefined,
+          delay: variant === "wax-envelope" && opened && !prefersReduced ? 0.16 : 0,
         }}
-        className="relative z-10 w-full max-w-sm"
+        className="relative z-10 w-full max-w-md @2xl:max-w-2xl @4xl:max-w-3xl"
         style={{ willChange: "transform, opacity" }}
       >
         <GateRevealedCard
@@ -117,7 +124,7 @@ function EnvelopeGateComponent({
         />
       </motion.div>
 
-      {/* LAYERED ENTRY BARRIER — smoothly animates out with zero hard DOM pop */}
+      {/* LAYERED ENTRY BARRIER */}
       {variant === "wax-envelope" && (
         <motion.div
           initial={false}
@@ -127,20 +134,19 @@ function EnvelopeGateComponent({
               : { y: 0, opacity: 1, scale: 1 }
           }
           transition={{ duration: prefersReduced ? 0.15 : 0.82, delay: opened ? 0.15 : 0, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-5"
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-4"
           style={{
             pointerEvents: opened ? "none" : "auto",
             willChange: "transform, opacity",
             transformStyle: "preserve-3d",
           }}
         >
-          <div className="relative w-72 sm:w-80" style={{ transformStyle: "preserve-3d" }}>
-            {/* Top Flap hinges upward cleanly before envelope recedes */}
+          <div className="relative w-full max-w-[280px] sm:max-w-[330px] @2xl:max-w-[400px]" style={{ transformStyle: "preserve-3d" }}>
             <motion.div
               initial={false}
               animate={opened ? { rotateX: prefersReduced ? 0 : 172 } : { rotateX: 0 }}
               transition={{ duration: prefersReduced ? 0 : 0.62, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-x-0 top-0 z-20 h-36 origin-top shadow-md"
+              className="absolute inset-x-0 top-0 z-20 h-32 sm:h-36 origin-top shadow-md"
               style={{
                 transformStyle: "preserve-3d",
                 background: `linear-gradient(180deg, ${primary}, ${primary}DD)`,
@@ -148,24 +154,23 @@ function EnvelopeGateComponent({
               }}
             />
 
-            {/* Envelope Pocket Body */}
-            <div className="relative z-10 rounded-2xl border border-black/10 bg-[#FFFDF6] px-6 pb-8 pt-40 text-center shadow-2xl">
+            <div className="relative z-10 rounded-2xl border border-black/10 bg-[#FFFDF6] px-5 pb-7 pt-36 sm:px-6 sm:pb-8 sm:pt-40 text-center shadow-2xl">
               <div
                 className="mx-auto inline-block rounded-full border px-3.5 py-1 font-ui text-[10px] font-semibold uppercase tracking-[0.24em] text-[#6E655F]"
                 style={{ borderColor: `${gold}55` }}
               >
                 Invitation For
               </div>
-              <p className="font-display mt-2 text-2xl font-bold text-[#161412]">{guestName}</p>
+              <p className="font-display mt-2 break-words text-2xl font-bold text-[#161412]">{guestName}</p>
 
               {/* Draggable Satin Seal Strip Track */}
               <div
-                className="relative mx-auto mt-4 flex h-12 w-56 items-center overflow-hidden rounded-full border bg-[#FAF3E6] p-1"
+                className="relative mx-auto mt-4 flex h-12 w-full max-w-[224px] items-center overflow-hidden rounded-full border bg-[#FAF3E6] p-1"
                 style={{ borderColor: `${gold}66` }}
               >
                 <motion.span
                   style={{ opacity: ribbonOpacity }}
-                  className="pointer-events-none inset-x-0 text-center font-ui text-[10px] font-bold uppercase tracking-[0.18em] text-[#6E655F] w-full pl-9"
+                  className="pointer-events-none inset-x-0 w-full pl-9 text-center font-ui text-[10px] font-bold uppercase tracking-[0.18em] text-[#6E655F]"
                 >
                   Slide seal →
                 </motion.span>
@@ -173,6 +178,8 @@ function EnvelopeGateComponent({
                   type="button"
                   drag={prefersReduced || opened ? false : "x"}
                   dragConstraints={{ left: 0, right: 168 }}
+                  dragSnapToOrigin
+                  dragTransition={SPRING_BOUNCE}
                   dragElastic={0.08}
                   style={{
                     x: swipeX,
@@ -194,7 +201,6 @@ function EnvelopeGateComponent({
               </div>
             </div>
 
-            {/* Wax Seal Crest */}
             <motion.div
               initial={false}
               animate={
@@ -204,7 +210,7 @@ function EnvelopeGateComponent({
               }
               transition={{ duration: prefersReduced ? 0 : 0.45 }}
               onClick={triggerOpen}
-              className="absolute left-1/2 top-28 z-30 grid h-16 w-16 -translate-x-1/2 cursor-pointer place-items-center rounded-full border-2 text-base font-bold text-white shadow-xl"
+              className="absolute left-1/2 top-24 sm:top-28 z-30 grid h-16 w-16 -translate-x-1/2 cursor-pointer place-items-center rounded-full border-2 text-base font-bold text-white shadow-xl"
               style={{
                 borderColor: `${gold}99`,
                 background: `radial-gradient(circle at 35% 30%, ${gold}, ${primary})`,
@@ -224,60 +230,62 @@ function EnvelopeGateComponent({
           initial={false}
           animate={{ opacity: opened ? 0 : 1 }}
           transition={{ duration: 0.45, delay: opened ? 0.55 : 0 }}
-          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-5"
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-4"
           style={{
             pointerEvents: opened ? "none" : "auto",
             willChange: "opacity",
-            perspective: 1200,
+            perspective: 1400,
           }}
         >
           <div
-            className="arch-frame relative h-[440px] w-full max-w-sm overflow-hidden border-2 bg-transparent shadow-2xl"
+            className="arch-frame @2xl:rounded-[2rem] relative h-[380px] sm:h-[440px] w-full max-w-[320px] sm:max-w-sm @2xl:max-w-xl overflow-hidden border-2 bg-transparent shadow-2xl"
             style={{ borderColor: gold }}
           >
-            {/* Left Carved Palace Door — swings inward in 3D */}
-            <motion.div
-              initial={false}
-              animate={
-                opened
-                  ? { x: "-100%", rotateY: prefersReduced ? 0 : 88 }
-                  : { x: 0, rotateY: 0 }
-              }
-              style={{
-                x: opened ? undefined : doorGap ? undefined : 0,
-                borderColor: `${gold}AA`,
-                background: `linear-gradient(135deg, ${primary} 0%, #240A10 100%)`,
-                transformOrigin: "left center",
-                willChange: "transform",
-              }}
-              transition={{ duration: prefersReduced ? 0.15 : 0.9, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-y-0 left-0 w-1/2 border-r p-3"
-            >
-              <div className="h-full w-full rounded-tl-full border p-2" style={{ borderColor: `${gold}66` }}>
-                <div className="h-full w-full rounded-tl-full border border-dashed" style={{ borderColor: `${gold}44` }} />
-              </div>
+            {/* Outer peek wrapper responds 1:1 to brass bolt drag; inner door swings 3D open */}
+            <motion.div style={{ x: leftDoorPeek }} className="absolute inset-y-0 left-0 w-1/2">
+              <motion.div
+                initial={false}
+                animate={
+                  opened
+                    ? { x: "-100%", rotateY: prefersReduced ? 0 : 88 }
+                    : { x: 0, rotateY: 0 }
+                }
+                style={{
+                  borderColor: `${gold}AA`,
+                  background: `linear-gradient(135deg, ${primary} 0%, #240A10 100%)`,
+                  transformOrigin: "left center",
+                  willChange: "transform",
+                }}
+                transition={{ duration: prefersReduced ? 0.15 : 0.9, ease: [0.22, 1, 0.36, 1] }}
+                className="h-full w-full border-r p-3"
+              >
+                <div className="h-full w-full rounded-tl-full border p-2" style={{ borderColor: `${gold}66` }}>
+                  <div className="h-full w-full rounded-tl-full border border-dashed" style={{ borderColor: `${gold}44` }} />
+                </div>
+              </motion.div>
             </motion.div>
 
-            {/* Right Carved Palace Door — swings inward in 3D */}
-            <motion.div
-              initial={false}
-              animate={
-                opened
-                  ? { x: "100%", rotateY: prefersReduced ? 0 : -88 }
-                  : { x: 0, rotateY: 0 }
-              }
-              style={{
-                borderColor: `${gold}AA`,
-                background: `linear-gradient(225deg, ${primary} 0%, #240A10 100%)`,
-                transformOrigin: "right center",
-                willChange: "transform",
-              }}
-              transition={{ duration: prefersReduced ? 0.15 : 0.9, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-y-0 right-0 w-1/2 border-l p-3"
-            >
-              <div className="h-full w-full rounded-tr-full border p-2" style={{ borderColor: `${gold}66` }}>
-                <div className="h-full w-full rounded-tr-full border border-dashed" style={{ borderColor: `${gold}44` }} />
-              </div>
+            <motion.div style={{ x: rightDoorPeek }} className="absolute inset-y-0 right-0 w-1/2">
+              <motion.div
+                initial={false}
+                animate={
+                  opened
+                    ? { x: "100%", rotateY: prefersReduced ? 0 : -88 }
+                    : { x: 0, rotateY: 0 }
+                }
+                style={{
+                  borderColor: `${gold}AA`,
+                  background: `linear-gradient(225deg, ${primary} 0%, #240A10 100%)`,
+                  transformOrigin: "right center",
+                  willChange: "transform",
+                }}
+                transition={{ duration: prefersReduced ? 0.15 : 0.9, ease: [0.22, 1, 0.36, 1] }}
+                className="h-full w-full border-l p-3"
+              >
+                <div className="h-full w-full rounded-tr-full border p-2" style={{ borderColor: `${gold}66` }}>
+                  <div className="h-full w-full rounded-tr-full border border-dashed" style={{ borderColor: `${gold}44` }} />
+                </div>
+              </motion.div>
             </motion.div>
 
             {/* Sliding Brass Bolt Handle in the center seam */}
@@ -298,6 +306,8 @@ function EnvelopeGateComponent({
                   type="button"
                   drag={prefersReduced || opened ? false : "y"}
                   dragConstraints={{ top: 0, bottom: 68 }}
+                  dragSnapToOrigin
+                  dragTransition={SPRING_BOUNCE}
                   dragElastic={0.12}
                   style={{ y: boltY, touchAction: "none", borderColor: gold, color: gold }}
                   onDragEnd={(_, info) => {
@@ -326,50 +336,45 @@ function EnvelopeGateComponent({
           initial={false}
           animate={{ opacity: opened ? 0 : 1 }}
           transition={{ duration: 0.45, delay: opened ? 0.55 : 0 }}
-          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-5"
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-4"
           style={{ pointerEvents: opened ? "none" : "auto", willChange: "opacity" }}
         >
           <div
-            className="relative h-[440px] w-full max-w-sm overflow-hidden rounded-[2rem] border bg-transparent shadow-2xl"
+            className="relative h-[380px] sm:h-[440px] w-full max-w-[320px] sm:max-w-sm @2xl:max-w-xl overflow-hidden rounded-[2rem] border bg-transparent shadow-2xl"
             style={{ borderColor: `${gold}88` }}
           >
-            {/* Left Velvet Curtain */}
-            <motion.div
-              initial={false}
-              animate={
-                opened
-                  ? { x: "-100%", scaleX: 0.58 }
-                  : { x: 0, scaleX: 1 }
-              }
-              style={{
-                x: opened ? undefined : curtainPeek ? undefined : 0,
-                background: `repeating-linear-gradient(90deg, ${primary} 0px, ${primary} 14px, #1B090D 22px, ${primary} 30px)`,
-                willChange: "transform",
-              }}
-              transition={{ duration: prefersReduced ? 0.15 : 0.92, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-y-0 left-0 w-[52%] origin-left"
-            />
-            {/* Right Velvet Curtain */}
-            <motion.div
-              initial={false}
-              animate={
-                opened
-                  ? { x: "100%", scaleX: 0.58 }
-                  : { x: 0, scaleX: 1 }
-              }
-              style={{
-                background: `repeating-linear-gradient(90deg, ${primary} 0px, #1B090D 10px, ${primary} 22px, ${primary} 30px)`,
-                willChange: "transform",
-              }}
-              transition={{ duration: prefersReduced ? 0.15 : 0.92, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-y-0 right-0 w-[52%] origin-right"
-            />
+            {/* Outer peek wrapper responds to drawstring pull in real time */}
+            <motion.div style={{ x: leftCurtainPeek }} className="absolute inset-y-0 left-0 w-[52%]">
+              <motion.div
+                initial={false}
+                animate={opened ? { x: "-100%", scaleX: 0.58 } : { x: 0, scaleX: 1 }}
+                style={{
+                  background: `repeating-linear-gradient(90deg, ${primary} 0px, ${primary} 14px, #1B090D 22px, ${primary} 30px)`,
+                  willChange: "transform",
+                }}
+                transition={{ duration: prefersReduced ? 0.15 : 0.92, ease: [0.22, 1, 0.36, 1] }}
+                className="h-full w-full origin-left"
+              />
+            </motion.div>
+
+            <motion.div style={{ x: rightCurtainPeek }} className="absolute inset-y-0 right-0 w-[52%]">
+              <motion.div
+                initial={false}
+                animate={opened ? { x: "100%", scaleX: 0.58 } : { x: 0, scaleX: 1 }}
+                style={{
+                  background: `repeating-linear-gradient(90deg, ${primary} 0px, #1B090D 10px, ${primary} 22px, ${primary} 30px)`,
+                  willChange: "transform",
+                }}
+                transition={{ duration: prefersReduced ? 0.15 : 0.92, ease: [0.22, 1, 0.36, 1] }}
+                className="h-full w-full origin-right"
+              />
+            </motion.div>
+
             <div
               className="absolute inset-x-0 top-0 h-4 border-b"
               style={{ background: gold, borderColor: "#FFFDF6" }}
             />
 
-            {/* Pullable Golden Drawcord & Crest */}
             <motion.div
               animate={opened ? { opacity: 0, y: -20 } : { opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
@@ -383,6 +388,8 @@ function EnvelopeGateComponent({
                 type="button"
                 drag={prefersReduced || opened ? false : "y"}
                 dragConstraints={{ top: 0, bottom: 80 }}
+                dragSnapToOrigin
+                dragTransition={SPRING_BOUNCE}
                 dragElastic={0.18}
                 style={{ y: cordY, touchAction: "none" }}
                 onDragEnd={(_, info) => {

@@ -192,8 +192,12 @@ export default function DashboardPage() {
   const maxDrink = Math.max(1, ...metrics.drinks.map((d) => d[1]));
 
   return (
-    <div className="mx-auto max-w-7xl px-5 py-10">
-      <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}>
+    <div className="mx-auto max-w-[1440px] px-4 sm:px-6 py-8 sm:py-10">
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      >
         <p className="font-ui text-xs font-bold uppercase tracking-[0.24em] text-[#6E1F2F]">
           Couple dashboard · {config.couple.groomName} weds {config.couple.brideName}
         </p>
@@ -263,9 +267,12 @@ export default function DashboardPage() {
                     <span>{cnt}</span>
                   </div>
                   <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#F0EAE1]">
-                    <div
-                      className="h-full rounded-full bg-[#6E1F2F]"
-                      style={{ width: `${(cnt / maxDrink) * 100}%` }}
+                    <motion.div
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: cnt / maxDrink }}
+                      transition={{ type: "spring", stiffness: 220, damping: 28 }}
+                      style={{ transformOrigin: "left" }}
+                      className="h-full w-full rounded-full bg-[#6E1F2F]"
                     />
                   </div>
                 </div>
@@ -315,7 +322,7 @@ export default function DashboardPage() {
       {/* Add Guest Form */}
       <form
         onSubmit={handleAdd}
-        className="mt-6 flex flex-wrap items-center gap-2 rounded-3xl border hairline bg-white p-4"
+        className="mt-6 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 rounded-3xl border hairline bg-white p-4"
       >
         <label htmlFor={addInputId} className="visually-hidden">
           Guest or family name
@@ -325,7 +332,7 @@ export default function DashboardPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Add guest — e.g. The Verma Family"
-          className="font-ui min-w-[220px] flex-1 rounded-full border hairline bg-[#FAF7F2] px-5 py-2.5 text-sm outline-none focus:border-[#6E1F2F]"
+          className="font-ui min-w-0 w-full sm:min-w-[220px] sm:flex-1 rounded-full border hairline bg-[#FAF7F2] px-5 py-2.5 text-sm outline-none focus:border-[#6E1F2F]"
         />
         <label htmlFor={groupSelectId} className="visually-hidden">
           Guest group
@@ -334,7 +341,7 @@ export default function DashboardPage() {
           id={groupSelectId}
           value={group}
           onChange={(e) => setGroup(e.target.value)}
-          className="font-ui rounded-full border hairline bg-[#FAF7F2] px-4 py-2.5 text-sm outline-none"
+          className="font-ui w-full sm:w-auto rounded-full border hairline bg-[#FAF7F2] px-4 py-2.5 text-sm outline-none"
         >
           {[
             "Groom's Family",
@@ -349,7 +356,7 @@ export default function DashboardPage() {
         </select>
         <button
           type="submit"
-          className="font-ui inline-flex items-center gap-1.5 rounded-full bg-[#6E1F2F] px-6 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-white transition hover:bg-[#161412]"
+          className="font-ui inline-flex min-h-[42px] w-full sm:w-auto items-center justify-center gap-1.5 rounded-full bg-[#6E1F2F] px-6 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-white transition-colors hover:bg-[#161412]"
         >
           <Plus size={15} /> Add guest
         </button>
@@ -378,15 +385,15 @@ export default function DashboardPage() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <search>
+        <div className="flex w-full sm:w-auto flex-wrap items-center gap-2">
+          <search className="min-w-0 flex-1 sm:flex-initial">
             <input
               type="search"
               aria-label="Filter guests"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search guest, diet, song…"
-              className="font-ui rounded-full border hairline bg-white px-4 py-2 text-xs outline-none focus:border-[#6E1F2F]"
+              className="font-ui w-full sm:w-56 rounded-full border hairline bg-white px-4 py-2 text-xs outline-none focus:border-[#6E1F2F]"
             />
           </search>
           <button
@@ -547,14 +554,14 @@ export default function DashboardPage() {
         title="Printable QR Code Studio"
         subtitle="Ready for physical invitation inserts & welcome easels"
       >
-        <div className="rounded-3xl border-2 bg-white p-8 text-center" style={{ borderColor: config.theme.accentGold }}>
+        <div className="rounded-3xl border-2 bg-white p-5 sm:p-8 text-center" style={{ borderColor: config.theme.accentGold }}>
           <p className="font-ui text-[10px] font-bold uppercase tracking-[0.28em]" style={{ color: config.theme.primaryColor }}>
             {config.blessing.sacredQuote}
           </p>
-          <h2 className="font-display mt-2 text-3xl font-bold" style={{ color: config.theme.primaryColor }}>
+          <h2 className="font-display mt-2 text-2xl sm:text-3xl font-bold" style={{ color: config.theme.primaryColor }}>
             {config.couple.groomName} &amp; {config.couple.brideName}
           </h2>
-          <p className="font-editorial mt-1 text-lg italic text-[#6E655F]">
+          <p className="font-editorial mt-1 text-base sm:text-lg italic text-[#6E655F]">
             {config.couple.dateDisplayLabel} · {config.location.city}
           </p>
           <div className="mx-auto my-5 inline-block rounded-2xl border hairline bg-white p-4 shadow-sm">
@@ -570,18 +577,18 @@ export default function DashboardPage() {
           </p>
           <p className="mt-1 break-all font-mono text-[11px] text-[#6E655F]">{publicUrl}</p>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button
             type="button"
             onClick={downloadQrSvg}
-            className="font-ui inline-flex items-center justify-center gap-2 rounded-full bg-[#161412] py-3 text-xs font-bold uppercase tracking-[0.12em] text-white hover:bg-[#6E1F2F]"
+            className="font-ui inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#161412] py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#6E1F2F]"
           >
             <Download size={14} /> Download SVG
           </button>
           <button
             type="button"
             onClick={() => window.print()}
-            className="font-ui inline-flex items-center justify-center gap-2 rounded-full border hairline bg-white py-3 text-xs font-bold uppercase tracking-[0.12em] hover:border-[#161412]"
+            className="font-ui inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border hairline bg-white py-3 text-xs font-bold uppercase tracking-[0.12em] transition-colors hover:border-[#161412]"
           >
             <Printer size={14} /> Print Card
           </button>
