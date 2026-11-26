@@ -1,6 +1,6 @@
 "use client";
 import { motion, useReducedMotion } from "framer-motion";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { ChevronLeft, ChevronRight, MapPin, Clock, ExternalLink } from "lucide-react";
 import { FunctionSceneIllustration } from "../icons/FunctionSceneIllustration";
 import type { FunctionEvent } from "@/lib/types";
@@ -10,7 +10,7 @@ export interface FunctionCarouselProps {
   heading?: string;
 }
 
-export default function FunctionCarousel({
+function FunctionCarouselComponent({
   functions,
   heading = "Wedding Festivities",
 }: FunctionCarouselProps) {
@@ -47,7 +47,7 @@ export default function FunctionCarousel({
         Swipe · {safeIndex + 1} of {total}
       </p>
 
-      {/* 3D Coverflow Stage */}
+      {/* 3D Coverflow Stage — Pure GPU transform & opacity (no filter: blur) */}
       <div
         className="relative mt-4 flex h-[410px] items-center justify-center overflow-hidden"
         style={{ perspective: 1200 }}
@@ -55,9 +55,8 @@ export default function FunctionCarousel({
         {visibleSlots.map(({ item: f, offset }) => {
           const isCenter = offset === 0;
           const targetX = offset === 0 ? "0%" : offset < 0 ? "-54%" : "54%";
-          const targetRotateY = prefersReduced ? 0 : offset * -20;
-          const targetScale = isCenter ? 1 : 0.84;
-          const targetBlur = isCenter ? "blur(0px)" : "blur(2.5px)";
+          const targetRotateY = prefersReduced ? 0 : offset * -18;
+          const targetScale = isCenter ? 1 : 0.85;
 
           return (
             <motion.article
@@ -67,14 +66,13 @@ export default function FunctionCarousel({
                 x: targetX,
                 scale: targetScale,
                 rotateY: targetRotateY,
-                opacity: isCenter ? 1 : 0.65,
-                filter: targetBlur,
+                opacity: isCenter ? 1 : 0.58,
                 zIndex: isCenter ? 20 : 10,
               }}
               transition={
                 prefersReduced
                   ? { duration: 0.15 }
-                  : { type: "spring", stiffness: 230, damping: 26 }
+                  : { type: "spring", stiffness: 260, damping: 28 }
               }
               drag={isCenter && total > 1 ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
@@ -85,7 +83,11 @@ export default function FunctionCarousel({
                 else if (info.offset.x > 50) go(-1);
               }}
               onClick={!isCenter ? () => go(offset) : undefined}
-              style={{ touchAction: "pan-y", transformStyle: "preserve-3d" }}
+              style={{
+                touchAction: "pan-y",
+                transformStyle: "preserve-3d",
+                willChange: "transform, opacity",
+              }}
               className={`absolute w-[82%] max-w-[330px] overflow-hidden rounded-3xl bg-white shadow-[0_24px_50px_-20px_rgba(22,20,18,0.38)] ring-1 ring-black/8 ${
                 isCenter
                   ? "cursor-grab active:cursor-grabbing"
@@ -100,7 +102,7 @@ export default function FunctionCarousel({
                   gold="#D4AF37"
                   className="h-full w-full object-cover"
                 />
-                <span className="absolute left-3.5 top-3.5 rounded-full bg-black/45 px-3 py-1 font-ui text-[10px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur-sm">
+                <span className="absolute left-3.5 top-3.5 rounded-full bg-black/55 px-3 py-1 font-ui text-[10px] font-bold uppercase tracking-[0.18em] text-white">
                   {f.name}
                 </span>
                 <span
@@ -201,3 +203,6 @@ export default function FunctionCarousel({
     </div>
   );
 }
+
+const FunctionCarousel = memo(FunctionCarouselComponent);
+export default FunctionCarousel;

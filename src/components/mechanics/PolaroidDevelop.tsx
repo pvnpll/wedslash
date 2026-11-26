@@ -1,6 +1,6 @@
 "use client";
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Camera, Sparkles } from "lucide-react";
 import Countdown from "../Countdown";
 
@@ -18,7 +18,7 @@ export interface PolaroidDevelopProps {
   onReveal?: () => void;
 }
 
-export default function PolaroidDevelop({
+function PolaroidDevelopComponent({
   groom,
   bride,
   dateLabel,
@@ -37,13 +37,13 @@ export default function PolaroidDevelop({
 
   useEffect(() => {
     if (stage !== "developing") return;
-    const flashTimer = window.setTimeout(() => setFlashActive(false), 420);
+    const flashTimer = window.setTimeout(() => setFlashActive(false), 400);
     const doneTimer = window.setTimeout(
       () => {
         setStage("developed");
         onReveal?.();
       },
-      prefersReduced ? 60 : 2400
+      prefersReduced ? 60 : 1800
     );
     return () => {
       window.clearTimeout(flashTimer);
@@ -76,7 +76,7 @@ export default function PolaroidDevelop({
             : { rotate: isRevealing ? 0 : -2, scale: isRevealing ? 1 : 0.98 }
         }
         whileHover={stage === "dark" && !prefersReduced ? { rotate: 0, scale: 1.01 } : undefined}
-        transition={{ type: "spring", stiffness: 180, damping: 20 }}
+        transition={{ type: "spring", stiffness: 200, damping: 22 }}
         className="relative mx-auto mt-5 block w-full max-w-[300px] rounded-sm border border-black/10 bg-[#FAF8F2] p-3.5 pb-6 text-left shadow-[0_26px_55px_-18px_rgba(22,20,18,0.45)] outline-none"
         aria-label={isRevealing ? `${groom} and ${bride} Polaroid` : "Tap to develop Polaroid"}
       >
@@ -86,7 +86,7 @@ export default function PolaroidDevelop({
           aria-hidden="true"
         />
 
-        {/* Photo Aperture */}
+        {/* Photo Aperture — Pure GPU opacity & scale transition (no slow CSS filter blur) */}
         <div
           className={`relative overflow-hidden bg-[#1A1614] ${
             compact ? "h-52" : "h-60"
@@ -95,12 +95,12 @@ export default function PolaroidDevelop({
           <div
             className="h-full w-full"
             style={{
-              filter: isRevealing
-                ? "brightness(1) sepia(0) blur(0px) contrast(1)"
-                : "brightness(0.15) sepia(0.8) blur(12px) contrast(0.65)",
+              opacity: isRevealing ? 1 : 0.16,
+              transform: isRevealing ? "scale(1)" : "scale(1.04)",
               transition: prefersReduced
-                ? "filter 150ms ease"
-                : "filter 2.4s cubic-bezier(0.22, 1, 0.36, 1)",
+                ? "opacity 150ms ease"
+                : "opacity 1.8s cubic-bezier(0.22, 1, 0.36, 1), transform 1.8s cubic-bezier(0.22, 1, 0.36, 1)",
+              willChange: "opacity, transform",
             }}
           >
             {imageUrl ? (
@@ -141,12 +141,24 @@ export default function PolaroidDevelop({
             )}
           </div>
 
+          {/* Warm chemical film tint overlay that fades out on GPU */}
+          <div
+            className="pointer-events-none absolute inset-0 bg-[#3B2618]"
+            style={{
+              opacity: isRevealing ? 0 : 0.72,
+              transition: prefersReduced
+                ? "opacity 150ms ease"
+                : "opacity 1.8s cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
+            aria-hidden="true"
+          />
+
           {/* Camera shutter flash */}
           {flashActive && (
             <motion.div
               initial={{ opacity: 0.95 }}
               animate={{ opacity: 0 }}
-              transition={{ duration: 0.42, ease: "easeOut" }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
               className="pointer-events-none absolute inset-0 bg-white"
               aria-hidden="true"
             />
@@ -155,10 +167,10 @@ export default function PolaroidDevelop({
           {/* Tap prompt overlay when dark */}
           {stage === "dark" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/25 text-white">
-              <span className="grid h-12 w-12 place-items-center rounded-full border border-white/40 bg-black/50 backdrop-blur-sm">
+              <span className="grid h-12 w-12 place-items-center rounded-full border border-white/40 bg-black/60">
                 <Camera size={20} />
               </span>
-              <span className="font-ui rounded-full bg-black/60 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em]">
+              <span className="font-ui rounded-full bg-black/65 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em]">
                 Tap to develop
               </span>
             </div>
@@ -199,3 +211,6 @@ export default function PolaroidDevelop({
     </div>
   );
 }
+
+const PolaroidDevelop = memo(PolaroidDevelopComponent);
+export default PolaroidDevelop;

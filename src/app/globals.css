@@ -11,10 +11,17 @@
   --gold-foil: #D4AF37;
 }
 
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
 body {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   background: var(--alabaster);
   color: var(--ink);
+  overflow-x: hidden;
 }
 
 .font-display { font-family: 'Playfair Display', Georgia, serif; }
@@ -22,8 +29,13 @@ body {
 .font-script { font-family: 'Pinyon Script', 'Great Vibes', cursive; }
 .font-ui { font-family: 'Montserrat', 'Plus Jakarta Sans', sans-serif; }
 
+/* Zero-cost GPU-friendly linen weave instead of SVG feTurbulence filter */
 .paper-grain {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-image:
+    radial-gradient(rgba(22, 20, 18, 0.028) 1px, transparent 0),
+    radial-gradient(rgba(197, 155, 39, 0.022) 1px, transparent 0);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
 }
 
 .hairline { border-color: rgba(22, 20, 18, 0.12); }
@@ -35,12 +47,10 @@ body {
   color: transparent;
 }
 
+/* Static high-contrast metallic sheen to avoid main-thread background-position repaints */
 .foil-sheen {
-  background: linear-gradient(120deg, #8a6d1c 0%, #d4af37 20%, #f6e27a 40%, #d4af37 60%, #8a6d1c 80%, #d4af37 100%);
-  background-size: 200% 100%;
-  animation: sheen 4s linear infinite;
+  background: linear-gradient(120deg, #8a6d1c 0%, #d4af37 22%, #f6e27a 46%, #d4af37 68%, #8a6d1c 88%, #d4af37 100%);
 }
-@keyframes sheen { to { background-position: -200% 0; } }
 
 .arch-frame {
   border-top-left-radius: 999px;
@@ -53,14 +63,24 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-.animate-floaty { animation: floaty 5s ease-in-out infinite; }
+@keyframes floaty { 0%,100% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(0, -8px, 0); } }
+.animate-floaty {
+  animation: floaty 5s ease-in-out infinite;
+  will-change: transform;
+}
 
-@keyframes sway { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
-.animate-sway { animation: sway 4s ease-in-out infinite; transform-origin: top center; }
+@keyframes sway { 0%,100% { transform: rotate(-3.5deg); } 50% { transform: rotate(3.5deg); } }
+.animate-sway {
+  animation: sway 4.2s ease-in-out infinite;
+  transform-origin: top center;
+  will-change: transform;
+}
 
-@keyframes kenburns { 0% { transform: scale(1); } 100% { transform: scale(1.12); } }
-.animate-kenburns { animation: kenburns 18s ease-in-out infinite alternate; }
+@keyframes kenburns { 0% { transform: scale3d(1, 1, 1); } 100% { transform: scale3d(1.08, 1.08, 1); } }
+.animate-kenburns {
+  animation: kenburns 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
 
 @keyframes dash-flow {
   from { stroke-dashoffset: 64; }
@@ -87,8 +107,7 @@ dialog:modal {
   margin: auto;
 }
 dialog::backdrop {
-  background: rgba(22, 20, 18, 0.58);
-  backdrop-filter: blur(4px);
+  background: rgba(22, 20, 18, 0.62);
   overflow: hidden;
   overscroll-behavior: contain;
 }

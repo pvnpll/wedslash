@@ -1,6 +1,6 @@
 "use client";
+import { memo } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Star, ArrowUpRight, Zap, Plane, Camera, Sparkles } from "lucide-react";
 import type { Template } from "@/lib/types";
 import { getPresetConfig } from "@/lib/templates";
@@ -28,7 +28,7 @@ function ThumbnailVisual({ t }: { t: Template }) {
     return (
       <div className="flex h-full items-center justify-center p-4" style={{ background: t.bg }}>
         <div
-          className="relative flex h-48 w-36 flex-col items-center justify-center rounded-r-xl rounded-l-[4px] border p-3 text-center shadow-2xl transition duration-500 group-hover:-rotate-3 group-hover:scale-105"
+          className="relative flex h-48 w-36 flex-col items-center justify-center rounded-r-xl rounded-l-[4px] border p-3 text-center shadow-2xl transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105"
           style={{
             background: `linear-gradient(150deg, ${t.primary}, #22090e)`,
             borderColor: t.gold,
@@ -64,7 +64,7 @@ function ThumbnailVisual({ t }: { t: Template }) {
     return (
       <div className="flex h-full items-center justify-center p-4" style={{ background: t.bg }}>
         <div
-          className="w-full max-w-[260px] overflow-hidden rounded-2xl p-4 text-white shadow-xl transition duration-500 group-hover:scale-[1.03]"
+          className="w-full max-w-[260px] overflow-hidden rounded-2xl p-4 text-white shadow-xl transition-transform duration-300 group-hover:scale-[1.03]"
           style={{ background: t.primary }}
         >
           <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-[0.22em]" style={{ color: t.gold }}>
@@ -99,7 +99,7 @@ function ThumbnailVisual({ t }: { t: Template }) {
         <p className="font-ui text-[9px] font-bold uppercase tracking-[0.22em]" style={{ color: t.primary }}>
           ✦ Scratch to Reveal ✦
         </p>
-        <div className="mt-3 flex gap-2.5 transition duration-500 group-hover:scale-105">
+        <div className="mt-3 flex gap-2.5 transition-transform duration-300 group-hover:scale-105">
           {[
             [dStr, "DAY"],
             [mStr, "MON"],
@@ -130,7 +130,7 @@ function ThumbnailVisual({ t }: { t: Template }) {
   if (t.previewType === "polaroid") {
     return (
       <div className="flex h-full items-center justify-center p-4" style={{ background: t.bg }}>
-        <div className="w-40 -rotate-3 rounded-sm bg-white p-2.5 pb-6 shadow-2xl ring-1 ring-black/10 transition duration-500 group-hover:rotate-0 group-hover:scale-105">
+        <div className="w-40 -rotate-3 rounded-sm bg-white p-2.5 pb-6 shadow-2xl ring-1 ring-black/10 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-105">
           <div
             className="grid h-32 place-items-center rounded-xs"
             style={{ background: `linear-gradient(145deg, ${t.primary}, ${t.gold})` }}
@@ -172,7 +172,7 @@ function ThumbnailVisual({ t }: { t: Template }) {
   if (t.previewType === "envelope") {
     return (
       <div className="flex h-full items-center justify-center p-4" style={{ background: t.bg }}>
-        <div className="relative w-52 overflow-hidden rounded-2xl border border-black/10 bg-[#FFFDF6] px-4 pb-5 pt-16 text-center shadow-xl transition duration-500 group-hover:scale-105">
+        <div className="relative w-52 overflow-hidden rounded-2xl border border-black/10 bg-[#FFFDF6] px-4 pb-5 pt-16 text-center shadow-xl transition-transform duration-300 group-hover:scale-105">
           <div
             className="absolute inset-x-0 top-0 h-20"
             style={{
@@ -199,7 +199,7 @@ function ThumbnailVisual({ t }: { t: Template }) {
     return (
       <div className="flex h-full items-center justify-center p-4" style={{ background: t.bg }}>
         <div
-          className="w-56 rounded-2xl border p-4 text-center shadow-2xl transition duration-500 group-hover:scale-105"
+          className="w-56 rounded-2xl border p-4 text-center shadow-2xl transition-transform duration-300 group-hover:scale-105"
           style={{
             borderColor: t.gold,
             background: `linear-gradient(145deg, ${t.primary}, #090910)`,
@@ -261,15 +261,9 @@ function ThumbnailVisual({ t }: { t: Template }) {
   );
 }
 
-export default function TemplateCard({ t, index = 0, onQuickPreview }: Props) {
+function TemplateCardComponent({ t, onQuickPreview }: Props) {
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 22 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ delay: (index % 3) * 0.06 }}
-      className="group overflow-hidden rounded-3xl border hairline bg-white shadow-sm transition hover:shadow-[0_28px_60px_-24px_rgba(22,20,18,0.35)]"
-    >
+    <article className="group overflow-hidden rounded-3xl border hairline bg-white shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_-20px_rgba(22,20,18,0.28)]">
       <Link href={`/invite/${t.id}`} className="relative block h-64 overflow-hidden">
         <ThumbnailVisual t={t} />
         {t.badge && (
@@ -278,7 +272,7 @@ export default function TemplateCard({ t, index = 0, onQuickPreview }: Props) {
           </span>
         )}
         <span
-          className="absolute bottom-4 right-4 grid h-10 w-10 place-items-center rounded-full bg-white text-[#161412] shadow-lg opacity-0 transition group-hover:opacity-100"
+          className="absolute bottom-4 right-4 grid h-10 w-10 place-items-center rounded-full bg-white text-[#161412] shadow-lg opacity-0 transition-opacity duration-200 group-hover:opacity-100"
           aria-hidden
         >
           <ArrowUpRight size={17} />
@@ -339,6 +333,9 @@ export default function TemplateCard({ t, index = 0, onQuickPreview }: Props) {
           </Link>
         </div>
       </div>
-    </motion.article>
+    </article>
   );
 }
+
+const TemplateCard = memo(TemplateCardComponent);
+export default TemplateCard;

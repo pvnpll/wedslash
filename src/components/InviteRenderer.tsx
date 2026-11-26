@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Music, VolumeX, Gift, Phone, Shirt, Sparkles, PlayCircle } from "lucide-react";
 import ParticleCanvas from "./ParticleCanvas";
 import BookGate from "./mechanics/BookGate";
@@ -28,7 +28,7 @@ interface Props {
   embedded?: boolean;
 }
 
-export default function InviteRenderer({
+function InviteRendererComponent({
   template,
   guest,
   customConfig,
@@ -56,7 +56,7 @@ export default function InviteRenderer({
     };
   }, []);
 
-  const startPlayback = () => {
+  const startPlayback = useCallback(() => {
     const ctrl = audioRef.current;
     if (!ctrl) return;
     if (cfg.mechanics.audioMode === "mp3" && cfg.mechanics.customMp3Url) {
@@ -66,9 +66,9 @@ export default function InviteRenderer({
     }
     setMuted(false);
     setAudioStarted(true);
-  };
+  }, [cfg.mechanics.audioMode, cfg.mechanics.customMp3Url, cfg.mechanics.musicTrackId]);
 
-  const toggleMusic = () => {
+  const toggleMusic = useCallback(() => {
     if (cfg.mechanics.audioMode === "youtube" && ytId) {
       setYtOpen(true);
       return;
@@ -79,13 +79,13 @@ export default function InviteRenderer({
       audioRef.current?.stop();
       setMuted(true);
     }
-  };
+  }, [cfg.mechanics.audioMode, muted, startPlayback, ytId]);
 
-  const handleGateOpen = () => {
+  const handleGateOpen = useCallback(() => {
     if (!audioStarted && cfg.mechanics.audioMode !== "youtube") {
       startPlayback();
     }
-  };
+  }, [audioStarted, cfg.mechanics.audioMode, startPlayback]);
 
   const dt = new Date(cfg.couple.weddingDate);
   const dayStr = isNaN(dt.getTime())
@@ -104,7 +104,7 @@ export default function InviteRenderer({
       className="relative"
       style={{ background: template.bg, color: template.ink }}
     >
-      {/* Swinging Marigold Toran & Corner Parallax Roses */}
+      {/* Swinging Marigold Toran & Corner Roses */}
       <ToranAndRoses
         toranEnabled={cfg.mechanics.marigoldToranEnabled}
         rosesEnabled={cfg.mechanics.cornerParallaxRoses}
@@ -208,7 +208,7 @@ export default function InviteRenderer({
         id="invite-sec-hero"
         className="relative overflow-hidden px-6 py-16 text-center paper-grain"
       >
-        <ParticleCanvas type={cfg.mechanics.particleType} density={26} />
+        <ParticleCanvas type={cfg.mechanics.particleType} density={20} />
         <div className="relative mx-auto max-w-md">
           {cfg.blessing.enabled && cfg.blessing.symbol !== "none" && (
             <div
@@ -527,3 +527,6 @@ export default function InviteRenderer({
     </div>
   );
 }
+
+const InviteRenderer = memo(InviteRendererComponent);
+export default InviteRenderer;

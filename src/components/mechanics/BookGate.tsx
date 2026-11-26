@@ -1,6 +1,6 @@
 "use client";
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Hand } from "lucide-react";
 import ParticleCanvas from "../ParticleCanvas";
 import { CulturalEmblem } from "../icons/CulturalEmblems";
@@ -54,21 +54,21 @@ function BlurInText({
     <span className={className} style={style} aria-label={text}>
       {chars.map((char, idx) =>
         reduced ? (
-          <span key={`${idx}-${char}`}>{char === " " ? "\u00A0" : char}</span>
+          <span key={`${idx}-${char}`}>{char === " " ? " " : char}</span>
         ) : (
           <motion.span
             key={`${idx}-${char}`}
             aria-hidden="true"
-            initial={{ opacity: 0.25, filter: "blur(4px)", y: 3 }}
-            animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+            initial={{ opacity: 0.2, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{
-              duration: 0.26,
-              delay: delay * 0.4 + idx * 0.025,
+              duration: 0.24,
+              delay: delay * 0.4 + idx * 0.02,
               ease: [0.22, 1, 0.36, 1],
             }}
             className="inline-block"
           >
-            {char === " " ? "\u00A0" : char}
+            {char === " " ? " " : char}
           </motion.span>
         )
       )}
@@ -76,7 +76,7 @@ function BlurInText({
   );
 }
 
-export default function BookGate({
+function BookGateComponent({
   groom,
   bride,
   groomParents,
@@ -100,7 +100,7 @@ export default function BookGate({
     if (phase !== "opening") return;
     const timer = window.setTimeout(
       () => setPhase("open"),
-      prefersReduced ? 50 : 920
+      prefersReduced ? 50 : 880
     );
     return () => window.clearTimeout(timer);
   }, [phase, prefersReduced]);
@@ -122,14 +122,14 @@ export default function BookGate({
       }`}
       style={{ perspective: 1400 }}
     >
-      <ParticleCanvas type="marigold-petals" density={compact ? 18 : 28} />
+      <ParticleCanvas type="marigold-petals" density={compact ? 14 : 20} />
 
       {/* Page 1 Arch Frame (scales in during cover hinge & rests when open) */}
       {(isSwinging || isOpened) && (
         <motion.div
-          initial={prefersReduced ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.86 }}
+          initial={prefersReduced ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.88 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: prefersReduced ? 0 : 0.85, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: prefersReduced ? 0 : 0.78, ease: [0.22, 1, 0.36, 1] }}
           className="relative z-10 flex w-full max-w-[360px] flex-col items-center justify-center"
         >
           <div
@@ -148,7 +148,7 @@ export default function BookGate({
                 aria-hidden="true"
                 className={`${
                   kenBurnsEnabled && !prefersReduced ? "animate-kenburns" : ""
-                } pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20 blur-[2px]`}
+                } pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20`}
               />
             ) : null}
             <div
@@ -197,7 +197,7 @@ export default function BookGate({
                 className={`font-display mt-3 font-bold leading-none ${compact ? "text-4xl" : "text-5xl"}`}
                 style={{ color: primary }}
               >
-                <BlurInText text={groom} delay={0.18} reduced={prefersReduced} />
+                <BlurInText text={groom} delay={0.14} reduced={prefersReduced} />
               </h2>
               {groomParents && (
                 <p className="font-ui mt-1.5 text-[10px] uppercase tracking-[0.18em] text-[#6E655F]">
@@ -213,7 +213,7 @@ export default function BookGate({
                 className={`font-display font-bold leading-none ${compact ? "text-4xl" : "text-5xl"}`}
                 style={{ color: primary }}
               >
-                <BlurInText text={bride} delay={0.5} reduced={prefersReduced} />
+                <BlurInText text={bride} delay={0.38} reduced={prefersReduced} />
               </h2>
               {brideParents && (
                 <p className="font-ui mt-1.5 text-[10px] uppercase tracking-[0.18em] text-[#6E655F]">
@@ -262,14 +262,15 @@ export default function BookGate({
             }
             whileHover={!isSwinging && !prefersReduced ? { rotateY: -8, scale: 1.02 } : undefined}
             transition={{
-              rotateY: { duration: prefersReduced ? 0 : 0.9, ease: [0.22, 1, 0.36, 1] },
-              opacity: { duration: prefersReduced ? 0 : 0.9, times: [0, 0.65, 1] },
+              rotateY: { duration: prefersReduced ? 0 : 0.85, ease: [0.22, 1, 0.36, 1] },
+              opacity: { duration: prefersReduced ? 0 : 0.85, times: [0, 0.65, 1] },
               scale: { type: "spring", stiffness: 180, damping: 20 },
             }}
             className="relative aspect-[3/4.1] w-56 overflow-hidden rounded-r-xl rounded-l-[4px] shadow-[0_30px_60px_-15px_rgba(110,31,47,0.55)] sm:w-64"
             style={{
               transformOrigin: "left center",
               transformStyle: "preserve-3d",
+              willChange: "transform, opacity",
               background: `linear-gradient(150deg, ${primary} 0%, #240910 72%, ${primary} 100%)`,
               border: `1.5px solid ${gold}`,
             }}
@@ -331,3 +332,6 @@ export default function BookGate({
     </div>
   );
 }
+
+const BookGate = memo(BookGateComponent);
+export default BookGate;

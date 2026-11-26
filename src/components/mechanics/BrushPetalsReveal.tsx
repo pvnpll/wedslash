@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useRef, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import Countdown from "../Countdown";
@@ -34,9 +34,8 @@ const PALETTES: Record<"rose" | "marigold", string[]> = {
 };
 
 function createInitialPetals(): Petal[] {
-  const count = 45;
+  const count = 32;
   return Array.from({ length: count }, (_, i) => {
-    // Deterministic phyllotaxis cluster centered over the date box
     const t = (i + 0.5) / count;
     const angle = i * 2.3999632297; // golden angle
     const radius = Math.sqrt(t) * 38;
@@ -49,13 +48,13 @@ function createInitialPetals(): Petal[] {
       dx: 0,
       dy: 0,
       rot: (i * 53) % 360,
-      scale: 0.85 + ((i * 7) % 5) * 0.1,
+      scale: 0.9 + ((i * 7) % 5) * 0.1,
       scattered: false,
     };
   });
 }
 
-export default function BrushPetalsReveal({
+function BrushPetalsRevealComponent({
   dateLabel,
   muhurat,
   venue,
@@ -70,6 +69,7 @@ export default function BrushPetalsReveal({
   const prefersReduced = useReducedMotion() ?? false;
   const fieldRef = useRef<HTMLDivElement>(null);
   const burstFired = useRef(false);
+  const rafLockRef = useRef(false);
   const [petals, setPetals] = useState<Petal[]>(createInitialPetals);
   const [revealed, setRevealed] = useState(false);
 
@@ -84,8 +84,8 @@ export default function BrushPetalsReveal({
         // @ts-expect-error canvas-confetti ships without bundled TypeScript declarations
         void import("canvas-confetti").then(({ default: confetti }) => {
           confetti({
-            particleCount: 70,
-            spread: 74,
+            particleCount: 55,
+            spread: 70,
             origin: { y: 0.6 },
             colors: [...PALETTES[petalColor], gold, "#FFFDF6"],
           });
@@ -113,42 +113,51 @@ export default function BrushPetalsReveal({
   }, [fireReveal]);
 
   const scatterNearPointer = (clientX: number, clientY: number) => {
+    if (revealed || rafLockRef.current) return;
     const field = fieldRef.current;
-    if (!field || revealed) return;
-    const rect = field.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-    const px = clientX - rect.left;
-    const py = clientY - rect.top;
-    const radius = 88;
+    if (!field) return;
+    rafLockRef.current = true;
 
-    setPetals((prev) => {
-      const next = prev.map((p) => {
-        const cx = (p.baseX / 100) * rect.width + p.dx;
-        const cy = (p.baseY / 100) * rect.height + p.dy;
-        const vx = cx - px;
-        const vy = cy - py;
-        const dist = Math.hypot(vx, vy);
-        if (dist < radius) {
-          const safeDist = Math.max(8, dist);
-          const push = ((radius - safeDist) / radius) * 90 + 26;
-          const ndx = p.dx + (vx / safeDist) * push;
-          const ndy = p.dy + (vy / safeDist) * push;
-          const isOut = Math.hypot(ndx, ndy) > 72;
-          return {
-            ...p,
-            dx: Math.max(-185, Math.min(185, ndx)),
-            dy: Math.max(-145, Math.min(145, ndy)),
-            rot: p.rot + (vx >= 0 ? 28 : -28),
-            scattered: p.scattered || isOut,
-          };
+    requestAnimationFrame(() => {
+      rafLockRef.current = false;
+      const rect = field.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const px = clientX - rect.left;
+      const py = clientY - rect.top;
+      const radius = 92;
+
+      setPetals((prev) => {
+        let changed = false;
+        const next = prev.map((p) => {
+          const cx = (p.baseX / 100) * rect.width + p.dx;
+          const cy = (p.baseY / 100) * rect.height + p.dy;
+          const vx = cx - px;
+          const vy = cy - py;
+          const dist = Math.hypot(vx, vy);
+          if (dist < radius) {
+            changed = true;
+            const safeDist = Math.max(8, dist);
+            const push = ((radius - safeDist) / radius) * 95 + 28;
+            const ndx = p.dx + (vx / safeDist) * push;
+            const ndy = p.dy + (vy / safeDist) * push;
+            const isOut = Math.hypot(ndx, ndy) > 70;
+            return {
+              ...p,
+              dx: Math.max(-185, Math.min(185, ndx)),
+              dy: Math.max(-145, Math.min(145, ndy)),
+              rot: p.rot + (vx >= 0 ? 28 : -28),
+              scattered: p.scattered || isOut,
+            };
+          }
+          return p;
+        });
+        if (!changed) return prev;
+        const scatteredCount = next.reduce((acc, p) => acc + (p.scattered ? 1 : 0), 0);
+        if (scatteredCount / next.length >= 0.62) {
+          queueMicrotask(brushAll);
         }
-        return p;
+        return next;
       });
-      const scatteredCount = next.reduce((acc, p) => acc + (p.scattered ? 1 : 0), 0);
-      if (scatteredCount / next.length >= 0.65) {
-        queueMicrotask(brushAll);
-      }
-      return next;
     });
   };
 
@@ -206,7 +215,7 @@ export default function BrushPetalsReveal({
           <p className="font-editorial text-base italic text-[#161412]/80">{venue}</p>
         </div>
 
-        {/* Interactive 45-Petal Pile Overlay */}
+        {/* Interactive 32-Petal Pile Overlay (GPU-composited) */}
         <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden" aria-hidden="true">
           {petals.map((p) => {
             const activePalette = PALETTES[petalColor];
@@ -219,13 +228,14 @@ export default function BrushPetalsReveal({
                   top: `${p.baseY}%`,
                   transform: `translate(-50%, -50%) translate3d(${p.dx}px, ${p.dy}px, 0) rotate(${p.rot}deg) scale(${p.scale})`,
                   opacity: p.scattered ? 0.12 : 0.94,
+                  willChange: "transform, opacity",
                   transition: prefersReduced
                     ? "opacity 150ms ease"
-                    : "transform 380ms cubic-bezier(0.22, 1, 0.36, 1), opacity 380ms ease",
+                    : "transform 340ms cubic-bezier(0.22, 1, 0.36, 1), opacity 340ms ease",
                 }}
                 className="absolute"
               >
-                <svg width="36" height="28" viewBox="0 0 36 28" fill="none">
+                <svg width="38" height="30" viewBox="0 0 36 28" fill="none">
                   <path
                     d="M18 2C27 2 34 9 33 17C32 24 23 27 17 25C9 23 2 17 3 10C4 4 11 2 18 2Z"
                     fill={fill}
@@ -273,3 +283,6 @@ export default function BrushPetalsReveal({
     </div>
   );
 }
+
+const BrushPetalsReveal = memo(BrushPetalsRevealComponent);
+export default BrushPetalsReveal;

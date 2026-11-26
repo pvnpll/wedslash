@@ -1,6 +1,6 @@
 "use client";
-import { motion, useReducedMotion, useScroll, useSpring, useTransform, useVelocity } from "framer-motion";
-import { useId } from "react";
+import { useReducedMotion } from "framer-motion";
+import { memo, useId } from "react";
 
 export interface ToranAndRosesProps {
   toranEnabled?: boolean;
@@ -49,36 +49,27 @@ function CornerRoseSvg({ primary, gold }: { primary: string; gold: string }) {
   );
 }
 
-export default function ToranAndRoses({
+const GARLAND_LOOPS = [0, 1, 2, 3, 4];
+
+function ToranAndRosesComponent({
   toranEnabled = true,
   rosesEnabled = true,
   primary = "#6E1F2F",
   gold = "#D4AF37",
 }: ToranAndRosesProps) {
   const prefersReduced = useReducedMotion() ?? false;
-  const { scrollY } = useScroll();
-  const scrollVelocity = useVelocity(scrollY);
-  const smoothVelocity = useSpring(scrollVelocity, { stiffness: 110, damping: 20 });
-  const swingAngle = useTransform(smoothVelocity, [-1400, 0, 1400], [-6, 0, 6]);
-  const roseShiftY = useTransform(scrollY, [0, 800], [0, 26]);
-  const roseRotate = useTransform(scrollY, [0, 800], [0, 12]);
 
   if (!toranEnabled && !rosesEnabled) return null;
 
-  const garlandLoops = [0, 1, 2, 3, 4];
-
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-      {/* Swinging Marigold Toran Garland Header */}
+      {/* Swinging Marigold Toran Garland Header (pure GPU CSS sway, zero scroll listeners) */}
       {toranEnabled && (
-        <motion.div
-          style={prefersReduced ? undefined : { rotate: swingAngle, transformOrigin: "top center" }}
-          className="relative z-20 flex w-full justify-center"
-        >
+        <div className="relative z-20 flex w-full justify-center">
           <svg viewBox="0 0 600 68" className="h-14 w-full max-w-3xl sm:h-16" fill="none">
             {/* Top golden rope */}
             <path d="M0 4H600" stroke={gold} strokeWidth="2.5" />
-            {garlandLoops.map((loop) => {
+            {GARLAND_LOOPS.map((loop) => {
               const x0 = loop * 120;
               const xm = x0 + 60;
               const x1 = x0 + 120;
@@ -117,38 +108,29 @@ export default function ToranAndRoses({
               );
             })}
           </svg>
-        </motion.div>
+        </div>
       )}
 
-      {/* Subtle Corner Parallax Roses */}
+      {/* Subtle Corner Roses */}
       {rosesEnabled && (
         <>
-          <motion.div
-            style={prefersReduced ? undefined : { y: roseShiftY, rotate: roseRotate }}
-            className="absolute -left-4 top-8 opacity-80"
-          >
+          <div className="absolute -left-4 top-8 opacity-80">
             <CornerRoseSvg primary={primary} gold={gold} />
-          </motion.div>
-          <motion.div
-            style={prefersReduced ? undefined : { y: roseShiftY, rotate: roseRotate }}
-            className="absolute -right-4 top-8 -scale-x-100 opacity-80"
-          >
+          </div>
+          <div className="absolute -right-4 top-8 -scale-x-100 opacity-80">
             <CornerRoseSvg primary={primary} gold={gold} />
-          </motion.div>
-          <motion.div
-            style={prefersReduced ? undefined : { rotate: roseRotate }}
-            className="absolute -bottom-4 -left-4 -scale-y-100 opacity-65"
-          >
+          </div>
+          <div className="absolute -bottom-4 -left-4 -scale-y-100 opacity-65">
             <CornerRoseSvg primary={primary} gold={gold} />
-          </motion.div>
-          <motion.div
-            style={prefersReduced ? undefined : { rotate: roseRotate }}
-            className="absolute -bottom-4 -right-4 scale-x-[-1] scale-y-[-1] opacity-65"
-          >
+          </div>
+          <div className="absolute -bottom-4 -right-4 scale-x-[-1] scale-y-[-1] opacity-65">
             <CornerRoseSvg primary={primary} gold={gold} />
-          </motion.div>
+          </div>
         </>
       )}
     </div>
   );
 }
+
+const ToranAndRoses = memo(ToranAndRosesComponent);
+export default ToranAndRoses;

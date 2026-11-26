@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import Countdown from "../Countdown";
 
@@ -34,7 +34,7 @@ function drawHeartPath(ctx: CanvasRenderingContext2D, w: number, h: number) {
 
 const CARD_IDS = ["day", "month", "year"] as const;
 
-export default function ScratchCard({
+function ScratchCardComponent({
   day,
   month,
   year,
@@ -76,8 +76,8 @@ export default function ScratchCard({
       // @ts-expect-error canvas-confetti ships without bundled TypeScript declarations
       void import("canvas-confetti").then(({ default: confetti }) => {
         confetti({
-          particleCount: 65,
-          spread: 70,
+          particleCount: 55,
+          spread: 68,
           origin: { y: 0.6 },
           colors: [light, dark, primary, "#FFFDF6"],
         });
@@ -209,6 +209,9 @@ function FoilScratchSurface({
   const drawingRef = useRef(false);
   const clearedRef = useRef(false);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
+  const rectRef = useRef<DOMRect | null>(null);
+  const ratioRef = useRef<number>(2);
+  const strokeDistRef = useRef<number>(0);
   const [localCleared, setLocalCleared] = useState(false);
 
   const isCleared = forcedCleared || localCleared;
@@ -222,7 +225,8 @@ function FoilScratchSurface({
     const height = shape === "heart" ? Math.round(size * 0.92) : size;
     canvas.width = size * 2;
     canvas.height = height * 2;
-    const ctx = canvas.getContext("2d");
+    strokeDistRef.current = 0;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
     ctx.save();
@@ -274,17 +278,15 @@ function FoilScratchSurface({
   }, [foil, isCleared, label, shape]);
 
   const getPos = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    const rect = rectRef.current ?? e.currentTarget.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
 
   const eraseSegment = (from: { x: number; y: number }, to: { x: number; y: number }) => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
+    const ctx = canvas?.getContext("2d", { willReadFrequently: true });
     if (!canvas || !ctx) return;
-    const rect = canvas.getBoundingClientRect();
-    if (!rect.width) return;
-    const ratio = canvas.width / rect.width;
+    const ratio = ratioRef.current;
     ctx.save();
     ctx.globalCompositeOperation = "destination-out";
     ctx.lineCap = "round";
@@ -298,23 +300,29 @@ function FoilScratchSurface({
     ctx.arc(to.x * ratio, to.y * ratio, (shape === "heart" ? 19 : 15) * (ratio / 2), 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+
+    const segDist = Math.hypot(to.x - from.x, to.y - from.y) + 8;
+    strokeDistRef.current += segDist;
+    const fastCompleteDist = shape === "heart" ? 420 : 210;
+    if (strokeDistRef.current >= fastCompleteDist) {
+      checkProgress();
+    }
   };
 
   const checkProgress = () => {
     if (clearedRef.current) return;
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
+    const ctx = canvas?.getContext("2d", { willReadFrequently: true });
     if (!canvas || !ctx) return;
     try {
       const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
       let transparent = 0;
       let total = 0;
-      for (let i = 3; i < data.length; i += 16) {
+      for (let i = 3; i < data.length; i += 32) {
         total++;
         if (data[i] === 0) transparent++;
       }
-      // Heart canvas has transparent corners around the heart shape (~35% empty)
-      const threshold = shape === "heart" ? 0.68 : 0.48;
+      const threshold = shape === "heart" ? 0.66 : 0.45;
       if (total > 0 && transparent / total > threshold) {
         clearedRef.current = true;
         setLocalCleared(true);
@@ -324,6 +332,32 @@ function FoilScratchSurface({
     } catch {
       /* ignore security errors on tainted canvases */
     }
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    rectRef.current = rect;
+    ratioRef.current = rect.width ? canvas.width / rect.width : 2;
+    drawingRef.current = true;
+    const p = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    lastRef.current = p;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    eraseSegment(p, p);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current || !lastRef.current) return;
+    const p = getPos(e);
+    eraseSegment(lastRef.current, p);
+    lastRef.current = p;
+  };
+
+  const handlePointerUp = () => {
+    drawingRef.current = false;
+    lastRef.current = null;
+    checkProgress();
   };
 
   if (shape === "heart") {
@@ -358,24 +392,9 @@ function FoilScratchSurface({
             ref={canvasRef}
             className="absolute inset-0 h-full w-full cursor-pointer"
             style={{ touchAction: "none" }}
-            onPointerDown={(e) => {
-              drawingRef.current = true;
-              const p = getPos(e);
-              lastRef.current = p;
-              e.currentTarget.setPointerCapture(e.pointerId);
-              eraseSegment(p, p);
-            }}
-            onPointerMove={(e) => {
-              if (!drawingRef.current || !lastRef.current) return;
-              const p = getPos(e);
-              eraseSegment(lastRef.current, p);
-              lastRef.current = p;
-            }}
-            onPointerUp={() => {
-              drawingRef.current = false;
-              lastRef.current = null;
-              checkProgress();
-            }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
             onPointerCancel={() => {
               drawingRef.current = false;
               lastRef.current = null;
@@ -406,24 +425,9 @@ function FoilScratchSurface({
             ref={canvasRef}
             className="absolute inset-0 h-full w-full cursor-pointer rounded-full"
             style={{ touchAction: "none" }}
-            onPointerDown={(e) => {
-              drawingRef.current = true;
-              const p = getPos(e);
-              lastRef.current = p;
-              e.currentTarget.setPointerCapture(e.pointerId);
-              eraseSegment(p, p);
-            }}
-            onPointerMove={(e) => {
-              if (!drawingRef.current || !lastRef.current) return;
-              const p = getPos(e);
-              eraseSegment(lastRef.current, p);
-              lastRef.current = p;
-            }}
-            onPointerUp={() => {
-              drawingRef.current = false;
-              lastRef.current = null;
-              checkProgress();
-            }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
             onPointerCancel={() => {
               drawingRef.current = false;
               lastRef.current = null;
@@ -434,3 +438,6 @@ function FoilScratchSurface({
     </div>
   );
 }
+
+const ScratchCard = memo(ScratchCardComponent);
+export default ScratchCard;

@@ -50,12 +50,25 @@ function safeReadMap(): Record<string, InvitationConfig> {
   }
 }
 
-function safeWriteDraft(config: InvitationConfig) {
+let draftWriteTimer: ReturnType<typeof setTimeout> | null = null;
+
+function safeWriteDraft(config: InvitationConfig, immediate = false) {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(config));
-  } catch {
-    /* ignore storage quota errors */
+  if (draftWriteTimer) {
+    clearTimeout(draftWriteTimer);
+    draftWriteTimer = null;
+  }
+  const commit = () => {
+    try {
+      window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(config));
+    } catch {
+      /* ignore storage quota errors */
+    }
+  };
+  if (immediate) {
+    commit();
+  } else {
+    draftWriteTimer = setTimeout(commit, 320);
   }
 }
 
@@ -105,7 +118,7 @@ export const useInvite = create<InviteState>((set, get) => ({
           slug: current.slug === current.templateId ? preset.slug : current.slug,
         }
       : preset;
-    safeWriteDraft(next);
+    safeWriteDraft(next, true);
     set({ config: next, opened: false, revealed: false });
   },
 
@@ -207,7 +220,7 @@ export const useInvite = create<InviteState>((set, get) => ({
         /* ignore quota */
       }
     }
-    safeWriteDraft(published);
+    safeWriteDraft(published, true);
     set({ config: published, publishedSlugs: map });
     return slug;
   },

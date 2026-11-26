@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import {
   ArrowRight,
   BookOpen,
@@ -26,12 +25,6 @@ import PolaroidDevelop from "@/components/mechanics/PolaroidDevelop";
 import BoardingPass from "@/components/mechanics/BoardingPass";
 import ParticleCanvas from "@/components/ParticleCanvas";
 
-const fade = {
-  initial: { opacity: 0, y: 26 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-60px" },
-};
-
 const HERO_DEMOS = [
   { id: "book", label: "3D Book", hint: "Tap the velvet cover to open" },
   { id: "tassel", label: "Tassel", hint: "Pull or tap the silk tassel" },
@@ -54,7 +47,7 @@ export default function Home() {
       {/* HERO */}
       <section className="relative overflow-hidden border-b hairline paper-grain">
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 pb-16 pt-12 lg:grid-cols-2 lg:pt-16">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
+          <div>
             <p className="font-ui inline-flex items-center gap-2 rounded-full border hairline bg-white px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6E1F2F]">
               <Sparkles size={13} /> 16 couture templates · Zero code
             </p>
@@ -96,15 +89,10 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Interactive Live Phone Stage */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.15 }}
-            className="relative mx-auto w-full max-w-[380px]"
-          >
+          <div className="relative mx-auto w-full max-w-[380px]">
             <div
               className="mb-3 grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:justify-center"
               role="tablist"
@@ -129,11 +117,15 @@ export default function Home() {
             </div>
 
             <div
-              className="absolute -inset-6 top-8 rounded-[3rem] bg-gradient-to-br from-[#6E1F2F]/15 via-[#D4AF37]/15 to-transparent blur-2xl"
+              className="pointer-events-none absolute -inset-6 top-8 rounded-[3rem]"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 45%, rgba(110, 31, 47, 0.14) 0%, rgba(212, 175, 55, 0.12) 45%, transparent 72%)",
+              }}
               aria-hidden="true"
             />
             <div
-              className="relative mx-auto max-w-[350px] overflow-hidden rounded-[2.6rem] border-[10px] border-[#161412] bg-[#FDF3EC] shadow-[0_40px_80px_-30px_rgba(22,20,18,0.5)]"
+              className="relative mx-auto max-w-[350px] overflow-hidden rounded-[2.6rem] border-[10px] border-[#161412] bg-[#FDF3EC] shadow-[0_36px_70px_-28px_rgba(22,20,18,0.45)]"
               style={{ height: 610 }}
             >
               <div
@@ -217,17 +209,14 @@ export default function Home() {
             <p className="font-ui mt-3 flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#6E655F]">
               <MousePointerClick size={14} /> Live demo — {currentDemoMeta.hint}
             </p>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* MECHANICS STRIP */}
       <section className="border-b hairline bg-[#161412] py-14 text-white">
         <div className="mx-auto max-w-7xl px-5">
-          <motion.div
-            {...fade}
-            className="flex flex-wrap items-end justify-between gap-4"
-          >
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="font-ui text-xs font-bold uppercase tracking-[0.24em] text-[#C59B27]">
                 Signature mechanics
@@ -242,7 +231,7 @@ export default function Home() {
             >
               Try them all <ArrowRight size={15} />
             </Link>
-          </motion.div>
+          </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
@@ -263,7 +252,7 @@ export default function Home() {
               {
                 icon: Flower2,
                 t: "Brush-the-Petals",
-                d: "45 interactive rose or marigold petals cover the date — guests brush them away to uncover what's beneath.",
+                d: "Interactive rose or marigold petals cover the date — guests brush them away to uncover what's beneath.",
               },
               {
                 icon: Camera,
@@ -286,9 +275,8 @@ export default function Home() {
                 d: "English, Hindi, Hinglish, Arabic, French, Spanish. No app needed — link, QR, or Netlify ZIP.",
               },
             ].map((m) => (
-              <motion.div
+              <div
                 key={m.t}
-                {...fade}
                 className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 transition hover:border-[#C59B27]/50"
               >
                 <m.icon size={22} className="text-[#F6E27A]" />
@@ -296,7 +284,7 @@ export default function Home() {
                 <p className="mt-1.5 text-sm leading-relaxed text-white/65">
                   {m.d}
                 </p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -304,10 +292,7 @@ export default function Home() {
 
       {/* FEATURED TEMPLATES */}
       <section className="mx-auto max-w-7xl px-5 py-16">
-        <motion.div
-          {...fade}
-          className="flex flex-wrap items-end justify-between gap-4"
-        >
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="font-ui text-xs font-bold uppercase tracking-[0.24em] text-[#6E1F2F]">
               The collection
@@ -322,7 +307,7 @@ export default function Home() {
           >
             View all 16 <ArrowRight size={14} />
           </Link>
-        </motion.div>
+        </div>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((t, i) => (
             <TemplateCard key={t.id} t={t} index={i} />
@@ -333,14 +318,14 @@ export default function Home() {
       {/* HOW IT WORKS */}
       <section className="border-y hairline bg-[#F0EAE1]/60 py-16">
         <div className="mx-auto max-w-7xl px-5">
-          <motion.div {...fade} className="text-center">
+          <div className="text-center">
             <p className="font-ui text-xs font-bold uppercase tracking-[0.24em] text-[#6E1F2F]">
               How it works
             </p>
             <h2 className="font-display mt-2 text-4xl font-bold sm:text-5xl">
               From idea to gasp in 3 steps
             </h2>
-          </motion.div>
+          </div>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {[
               {
@@ -359,9 +344,8 @@ export default function Home() {
                 d: "Fire personalized WhatsApp invites (?guest=…) and watch Yes / No / Tell-you-later, drinks, dietary and song requests roll into your CRM.",
               },
             ].map((s) => (
-              <motion.div
+              <div
                 key={s.n}
-                {...fade}
                 className="rounded-3xl border hairline bg-white p-7"
               >
                 <p className="font-display text-5xl font-bold text-[#6E1F2F]/15">
@@ -371,7 +355,7 @@ export default function Home() {
                 <p className="mt-2 text-[15px] leading-relaxed text-[#6E655F]">
                   {s.d}
                 </p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -379,14 +363,14 @@ export default function Home() {
 
       {/* REVIEWS */}
       <section className="mx-auto max-w-7xl px-5 py-16">
-        <motion.div {...fade} className="text-center">
+        <div className="text-center">
           <p className="font-ui text-xs font-bold uppercase tracking-[0.24em] text-[#6E1F2F]">
             Loved worldwide
           </p>
           <h2 className="font-display mt-2 text-4xl font-bold">
             5.0 ★ from 2,200+ celebrations
           </h2>
-        </motion.div>
+        </div>
         <div className="mt-8 grid gap-5 md:grid-cols-3">
           {[
             {
@@ -405,9 +389,8 @@ export default function Home() {
               w: "The Sacred Garden · New York",
             },
           ].map((r) => (
-            <motion.figure
+            <figure
               key={r.n}
-              {...fade}
               className="rounded-3xl border hairline bg-white p-7"
             >
               <div className="flex gap-1">
@@ -428,15 +411,15 @@ export default function Home() {
                   {r.w}
                 </span>
               </figcaption>
-            </motion.figure>
+            </figure>
           ))}
         </div>
       </section>
 
       {/* CTA */}
       <section className="relative overflow-hidden bg-[#6E1F2F] py-20 text-center text-white">
-        <ParticleCanvas type="gold-dust" density={40} />
-        <motion.div {...fade} className="relative mx-auto max-w-2xl px-5">
+        <ParticleCanvas type="gold-dust" density={22} />
+        <div className="relative mx-auto max-w-2xl px-5">
           <p className="font-ui text-xs font-bold uppercase tracking-[0.28em] text-[#F6E27A]">
             Ready when you are
           </p>
@@ -460,7 +443,7 @@ export default function Home() {
               See a live invite
             </Link>
           </div>
-        </motion.div>
+        </div>
       </section>
     </div>
   );
