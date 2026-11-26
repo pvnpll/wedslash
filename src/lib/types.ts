@@ -177,6 +177,13 @@ export interface InvitationConfig {
   };
 }
 
+export type LayoutStyle =
+  | "heritage"    // current arch / velvet-card layout (default)
+  | "editorial"   // magazine full-bleed, asymmetric, diagonal type
+  | "cinematic"   // 16:9 letterbox hero, film-strip sections, grain overlay
+  | "dark-cosmos" // near-black bg, glowing starfield, luminous minimal type
+  | "minimal-zen"; // vast negative space, single giant word per section
+
 export interface Template {
   id: string;
   name: string;
@@ -195,6 +202,7 @@ export interface Template {
   bg: string;
   ink: string;
   font: "royal" | "editorial" | "minimal";
+  layoutStyle?: LayoutStyle;
   particle: string;
   rating: number;
   uses: string;

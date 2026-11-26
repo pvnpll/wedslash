@@ -1,9 +1,11 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { TEMPLATES } from "@/lib/templates";
 import { useInvite } from "@/store/useInvite";
 import InviteRenderer from "@/components/InviteRenderer";
+import { ThemeSelector, THEME_PRESETS } from "@/components/ThemeSelector";
+import type { ThemePreset } from "@/components/ThemeSelector";
 
 export default function InviteClient() {
   const params = useParams();
@@ -28,11 +30,24 @@ export default function InviteClient() {
     TEMPLATES.find((t) => t.id === slug) ??
     TEMPLATES[0];
 
+  // Theme preset state — default = "classic-gold" (preserves template's own colors)
+  const [activeTheme, setActiveTheme] = useState<ThemePreset | null>(null);
+
   return (
-    <InviteRenderer
-      template={template}
-      customConfig={customConfig}
-      guest={sp.get("guest") ?? ""}
-    />
+    <>
+      <ThemeSelector
+        activeId={activeTheme?.id ?? "classic-gold"}
+        onSelect={(preset) => {
+          // Toggle off if already active
+          setActiveTheme((prev) => (prev?.id === preset.id ? null : preset));
+        }}
+      />
+      <InviteRenderer
+        template={template}
+        customConfig={customConfig}
+        guest={sp.get("guest") ?? ""}
+        themePreset={activeTheme}
+      />
+    </>
   );
 }

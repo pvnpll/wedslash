@@ -25,6 +25,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FBF3EC",
     ink: "#2A1215",
     font: "royal",
+    layoutStyle: "heritage",
     particle: "Marigold petals",
     rating: 4.9,
     uses: "12.4k",
@@ -48,6 +49,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FFF9EF",
     ink: "#2B1013",
     font: "royal",
+    layoutStyle: "heritage",
     particle: "Marigold petals",
     rating: 4.9,
     uses: "9.1k",
@@ -71,6 +73,7 @@ export const TEMPLATES: Template[] = [
     bg: "#F4EFE3",
     ink: "#10241B",
     font: "royal",
+    layoutStyle: "heritage",
     particle: "Golden dust",
     rating: 5.0,
     uses: "6.8k",
@@ -93,6 +96,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FFFBEB",
     ink: "#431407",
     font: "royal",
+    layoutStyle: "heritage",
     particle: "Golden dust",
     rating: 4.8,
     uses: "5.2k",
@@ -115,6 +119,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FDF4F5",
     ink: "#3B2226",
     font: "royal",
+    layoutStyle: "heritage",
     particle: "Rose petals",
     rating: 4.8,
     uses: "4.7k",
@@ -138,6 +143,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FDF9F0",
     ink: "#12312B",
     font: "editorial",
+    layoutStyle: "editorial",
     particle: "Golden dust",
     rating: 5.0,
     uses: "11.2k",
@@ -161,6 +167,7 @@ export const TEMPLATES: Template[] = [
     bg: "#EFF4FA",
     ink: "#0F2440",
     font: "editorial",
+    layoutStyle: "cinematic",
     particle: "Starlight",
     rating: 4.9,
     uses: "8.6k",
@@ -184,6 +191,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FAF0E4",
     ink: "#3A2113",
     font: "editorial",
+    layoutStyle: "editorial",
     particle: "Rose petals",
     rating: 4.9,
     uses: "5.9k",
@@ -206,6 +214,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FAF7F2",
     ink: "#1C1C1A",
     font: "editorial",
+    layoutStyle: "minimal-zen",
     particle: "Golden dust",
     rating: 4.9,
     uses: "7.3k",
@@ -228,6 +237,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FFFFFF",
     ink: "#111111",
     font: "editorial",
+    layoutStyle: "editorial",
     particle: "None",
     rating: 4.8,
     uses: "6.1k",
@@ -251,6 +261,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FFF9EF",
     ink: "#331014",
     font: "royal",
+    layoutStyle: "dark-cosmos",
     particle: "Golden dust",
     rating: 5.0,
     uses: "14.8k",
@@ -274,6 +285,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FDF0F3",
     ink: "#402027",
     font: "editorial",
+    layoutStyle: "minimal-zen",
     particle: "Rose petals",
     rating: 4.9,
     uses: "7.7k",
@@ -296,6 +308,7 @@ export const TEMPLATES: Template[] = [
     bg: "#F6F1E6",
     ink: "#1E2A38",
     font: "editorial",
+    layoutStyle: "cinematic",
     particle: "Golden dust",
     rating: 4.8,
     uses: "5.5k",
@@ -319,6 +332,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FAF4E6",
     ink: "#2A2222",
     font: "editorial",
+    layoutStyle: "dark-cosmos",
     particle: "Starlight",
     rating: 4.8,
     uses: "4.2k",
@@ -342,6 +356,7 @@ export const TEMPLATES: Template[] = [
     bg: "#F6F1E4",
     ink: "#0E241C",
     font: "editorial",
+    layoutStyle: "editorial",
     particle: "Golden dust",
     rating: 5.0,
     uses: "1.1k",
@@ -365,6 +380,7 @@ export const TEMPLATES: Template[] = [
     bg: "#FDF2F4",
     ink: "#402027",
     font: "editorial",
+    layoutStyle: "minimal-zen",
     particle: "Rose petals",
     rating: 4.9,
     uses: "860",
@@ -387,6 +403,7 @@ export const TEMPLATES: Template[] = [
     bg: "#14142B",
     ink: "#F5EFE6",
     font: "editorial",
+    layoutStyle: "dark-cosmos",
     particle: "Starlight",
     rating: 4.9,
     uses: "6.4k",
@@ -409,6 +426,7 @@ export const TEMPLATES: Template[] = [
     bg: "#F7F3EB",
     ink: "#2C3E50",
     font: "royal",
+    layoutStyle: "dark-cosmos",
     particle: "Snow blossom",
     rating: 4.9,
     uses: "5.8k",
@@ -463,22 +481,21 @@ export const TRACK_BY_TEMPLATE: Record<string, string> = {
   "little-star": "starry-celesta",
 };
 
-export const LANGUAGE_COPY: Record<
-  InviteLanguage,
-  {
-    together: string;
-    rsvpHeading: string;
-    rsvpSub: string;
-    tapBook: string;
-    tapSeal: string;
-    saveTheDate: string;
-    festivities: string;
-    story: string;
-    dressCode: string;
-    venue: string;
-    closing: string;
-  }
-> = {
+export type LanguageCopy = {
+  together: string;
+  rsvpHeading: string;
+  rsvpSub: string;
+  tapBook: string;
+  tapSeal: string;
+  saveTheDate: string;
+  festivities: string;
+  story: string;
+  dressCode: string;
+  venue: string;
+  closing: string;
+};
+
+export const LANGUAGE_COPY: Record<InviteLanguage, LanguageCopy> = {
   english: {
     together: "Together with their families",
     rsvpHeading: "Will you join us?",

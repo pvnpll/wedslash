@@ -1,6 +1,6 @@
 "use client";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { Music, VolumeX, Gift, Phone, Shirt, Sparkles, PlayCircle } from "lucide-react";
+import { Music, VolumeX, PlayCircle } from "lucide-react";
 import ParticleCanvas from "./ParticleCanvas";
 import BookGate from "./mechanics/BookGate";
 import EnvelopeGate from "./mechanics/EnvelopeGate";
@@ -23,16 +23,26 @@ import IllustratedMapCard from "./mechanics/IllustratedMapCard";
 import RsvpForm from "./mechanics/RsvpForm";
 import { CulturalEmblem } from "./icons/CulturalEmblems";
 import AccessibleDialog from "./AccessibleDialog";
+import { Gift, Phone, Shirt, Sparkles } from "lucide-react";
 import { useInvite } from "@/store/useInvite";
 import { getPresetConfig, LANGUAGE_COPY } from "@/lib/templates";
 import { InviteAudioController, parseYoutubeId } from "@/lib/audioSynth";
 import type { InvitationConfig, Template } from "@/lib/types";
+import type { ThemePreset } from "./ThemeSelector";
+
+// Layout variants
+import { EditorialLayout } from "./layouts/EditorialLayout";
+import { CinematicLayout } from "./layouts/CinematicLayout";
+import { DarkCosmosLayout } from "./layouts/DarkCosmosLayout";
+import { MinimalZenLayout } from "./layouts/MinimalZenLayout";
 
 interface Props {
   template: Template;
   guest: string;
   customConfig?: InvitationConfig;
   embedded?: boolean;
+  /** Active theme preset override — from ThemeSelector */
+  themePreset?: ThemePreset | null;
 }
 
 function InviteRendererComponent({
@@ -40,6 +50,7 @@ function InviteRendererComponent({
   guest,
   customConfig,
   embedded = false,
+  themePreset,
 }: Props) {
   const storeCfg = useInvite((st) => st.config);
   const storeGuest = useInvite((st) => st.guestName);
@@ -55,6 +66,18 @@ function InviteRendererComponent({
   const guestName = guest || storeGuest || "Honored Guest";
   const copy = LANGUAGE_COPY[cfg.language] ?? LANGUAGE_COPY.english;
   const ytId = parseYoutubeId(cfg.mechanics.youtubeSongUrl);
+
+  // Merge theme preset overrides on top of template colors
+  const tpl: Template = themePreset
+    ? {
+        ...template,
+        primary: themePreset.primary,
+        gold: themePreset.gold,
+        bg: themePreset.bg,
+        ink: themePreset.ink,
+        secondary: themePreset.bg,
+      }
+    : template;
 
   useEffect(() => {
     audioRef.current = new InviteAudioController();
@@ -95,9 +118,7 @@ function InviteRendererComponent({
   }, [audioStarted, cfg.mechanics.audioMode, startPlayback]);
 
   const dt = new Date(cfg.couple.weddingDate);
-  const dayStr = isNaN(dt.getTime())
-    ? "13"
-    : String(dt.getDate()).padStart(2, "0");
+  const dayStr = isNaN(dt.getTime()) ? "13" : String(dt.getDate()).padStart(2, "0");
   const monthStr = isNaN(dt.getTime())
     ? "FEB"
     : dt.toLocaleString("en-US", { month: "short" }).toUpperCase();
@@ -105,181 +126,358 @@ function InviteRendererComponent({
 
   const entryType = cfg.mechanics.entryType;
   const revealType = cfg.mechanics.dateRevealType;
+  const layoutStyle = tpl.layoutStyle ?? "heritage";
 
+  // ── BUILD THE GATE NODE ──────────────────────────────────────────────────────
+  const GateNode = (
+    <>
+      {entryType === "boarding-pass" ? (
+        <div className="flex min-h-[620px] flex-col items-center justify-center bg-[#0F2440] px-4 py-12 text-white">
+          <p className="mb-4 font-ui text-[11px] uppercase tracking-[0.3em] text-[#F6E27A]">
+            Boarding for {guestName}
+          </p>
+          <BoardingPass
+            guestName={guestName}
+            groom={cfg.couple.groomName}
+            bride={cfg.couple.brideName}
+            departureCode={cfg.location.departureCode}
+            departureCity={cfg.location.departureCity}
+            arrivalCode={cfg.location.arrivalCode}
+            arrivalCity={cfg.location.arrivalCity}
+            targetDate={cfg.couple.weddingDate}
+            primary={tpl.primary}
+            gold={tpl.gold}
+            onOpen={handleGateOpen}
+          />
+          <p className="mt-5 font-ui text-[11px] uppercase tracking-[0.3em] text-white/60">
+            Scroll to board ↓
+          </p>
+        </div>
+      ) : entryType === "ring-box" ? (
+        <RingBoxGate
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          monogram={cfg.couple.monogram}
+          guestName={guestName}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          tapLabel={cfg.language === "english" ? undefined : copy.tapSeal}
+          onOpen={handleGateOpen}
+        />
+      ) : entryType === "diya-lamp" ? (
+        <DiyaLampGate
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          guestName={guestName}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          tapLabel={cfg.language === "english" ? undefined : copy.tapSeal}
+          onOpen={handleGateOpen}
+        />
+      ) : entryType === "palace-doors" ? (
+        <EnvelopeGate
+          variant="palace-doors"
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          monogram={cfg.couple.monogram}
+          venueTitle={cfg.location.venueTitle}
+          city={cfg.location.city}
+          guestName={guestName}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          tapLabel={copy.tapSeal}
+          onOpen={handleGateOpen}
+        />
+      ) : entryType === "curtain-reveal" ? (
+        <EnvelopeGate
+          variant="curtain-reveal"
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          monogram={cfg.couple.monogram}
+          venueTitle={cfg.location.venueTitle}
+          city={cfg.location.city}
+          guestName={guestName}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          tapLabel={copy.tapSeal}
+          onOpen={handleGateOpen}
+        />
+      ) : entryType === "biometric-bloom" ? (
+        <BiometricBloomGate
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          monogram={cfg.couple.monogram}
+          guestName={guestName}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          onOpen={handleGateOpen}
+        />
+      ) : entryType === "constellation-trace" ? (
+        <ConstellationGate
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          guestName={guestName}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          onOpen={handleGateOpen}
+        />
+      ) : entryType === "tear-perforation" ? (
+        <TearPerforationGate
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          guestName={guestName}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          onOpen={handleGateOpen}
+        />
+      ) : entryType === "frost-wipe" ? (
+        <FrostWipeGate
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          guestName={guestName}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          onOpen={handleGateOpen}
+        />
+      ) : entryType === "mandala-dial" ? (
+        <MandalaDialGate
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          monogram={cfg.couple.monogram}
+          guestName={guestName}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          onOpen={handleGateOpen}
+        />
+      ) : entryType === "velvet-book" ? (
+        <BookGate
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          groomParents={cfg.couple.groomParents}
+          brideParents={cfg.couple.brideParents}
+          guestName={guestName}
+          sacredQuote={cfg.blessing.sacredQuote}
+          inviteIntro={cfg.blessing.inviteIntroLine}
+          symbol={cfg.blessing.enabled ? cfg.blessing.symbol : "none"}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          heroPhotoUrl={cfg.couple.heroPhotoUrl}
+          kenBurnsEnabled={cfg.couple.kenBurnsEnabled}
+          tapLabel={copy.tapBook}
+          onOpen={handleGateOpen}
+        />
+      ) : (
+        <EnvelopeGate
+          variant={entryType}
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          monogram={cfg.couple.monogram}
+          venueTitle={cfg.location.venueTitle}
+          city={cfg.location.city}
+          guestName={guestName}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          tapLabel={copy.tapSeal}
+          onOpen={handleGateOpen}
+        />
+      )}
+    </>
+  );
+
+  // ── BUILD THE DATE REVEAL NODE ───────────────────────────────────────────────
+  const DateRevealNode = (
+    <>
+      {revealType === "pull-tassel-scroll" && (
+        <TasselScroll
+          dateLabel={cfg.couple.dateDisplayLabel}
+          muhurat={cfg.couple.muhuratTime}
+          target={cfg.couple.weddingDate}
+          title={`${cfg.couple.groomName} weds ${cfg.couple.brideName}`}
+          venue={cfg.location.venueTitle}
+          symbol={cfg.blessing.enabled ? cfg.blessing.symbol : "none"}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          label={copy.saveTheDate}
+        />
+      )}
+      {(revealType === "scratch-3-circles" || revealType === "scratch-heart") && (
+        <ScratchCard
+          variant={revealType === "scratch-heart" ? "heart" : "3-circles"}
+          day={dayStr}
+          month={monthStr}
+          year={yearStr}
+          venue={`${cfg.location.venueTitle} · ${cfg.couple.muhuratTime}`}
+          target={cfg.couple.weddingDate}
+          title={`${cfg.couple.groomName} weds ${cfg.couple.brideName}`}
+          foil={tpl.id === "timeless-grace" ? "silver" : "gold"}
+          primary={tpl.primary}
+        />
+      )}
+      {revealType === "brush-petals" && (
+        <BrushPetalsReveal
+          dateLabel={cfg.couple.dateDisplayLabel}
+          muhurat={cfg.couple.muhuratTime}
+          venue={cfg.location.venueTitle}
+          target={cfg.couple.weddingDate}
+          title={`${cfg.couple.groomName} weds ${cfg.couple.brideName}`}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          petalColor={
+            cfg.mechanics.particleType === "marigold-petals" ? "marigold" : "rose"
+          }
+        />
+      )}
+      {revealType === "polaroid-develop" && (
+        <PolaroidDevelop
+          groom={cfg.couple.groomName}
+          bride={cfg.couple.brideName}
+          dateLabel={cfg.couple.dateDisplayLabel}
+          venue={`${cfg.location.venueTitle} · ${cfg.location.city}`}
+          target={cfg.couple.weddingDate}
+          title={`${cfg.couple.groomName} weds ${cfg.couple.brideName}`}
+          primary={tpl.primary}
+          gold={tpl.gold}
+          imageUrl={cfg.couple.heroPhotoUrl || undefined}
+        />
+      )}
+    </>
+  );
+
+  // ── MUSIC PILL (floating — shared across all layouts) ────────────────────────
+  const MusicPill = (
+    <button
+      type="button"
+      onClick={toggleMusic}
+      aria-label={
+        ytId
+          ? "Open Our Song on YouTube"
+          : muted
+          ? "Play soundtrack"
+          : "Mute soundtrack"
+      }
+      className={`${
+        embedded
+          ? "absolute right-3 bottom-3 @2xl:bottom-auto @2xl:top-3 z-40"
+          : "fixed bottom-4 right-4 z-50"
+      } inline-flex items-center gap-2 rounded-full bg-[#161412] px-4 py-2 font-ui text-xs font-semibold text-white shadow-xl transition-colors hover:bg-[#6E1F2F]`}
+    >
+      {ytId ? (
+        <>
+          <PlayCircle size={15} className="text-[#F6E27A]" /> Our Song ♪
+        </>
+      ) : muted ? (
+        <>
+          <VolumeX size={14} /> Sound Off
+        </>
+      ) : (
+        <>
+          <Music size={14} className="animate-pulse text-[#F6E27A]" /> Our Song ♪
+        </>
+      )}
+    </button>
+  );
+
+  // ── YOUTUBE MODAL ────────────────────────────────────────────────────────────
+  const YtModal = ytId ? (
+    <AccessibleDialog
+      open={ytOpen}
+      onClose={() => setYtOpen(false)}
+      title="Our Wedding Song"
+      subtitle={`${cfg.couple.groomName} & ${cfg.couple.brideName}`}
+    >
+      <div className="aspect-video overflow-hidden rounded-2xl bg-black">
+        <iframe
+          title="Couple's wedding song on YouTube"
+          src={`https://www.youtube-nocookie.com/embed/${ytId}`}
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    </AccessibleDialog>
+  ) : null;
+
+  // ── DISPATCH TO LAYOUT VARIANT ───────────────────────────────────────────────
+  const sharedLayoutProps = {
+    cfg,
+    template: tpl,
+    guestName,
+    copy,
+    Gate: GateNode,
+    DateReveal: DateRevealNode,
+  };
+
+  if (layoutStyle === "editorial") {
+    return (
+      <div className="relative">
+        {/* Toran for Indian-category templates */}
+        <ToranAndRoses
+          toranEnabled={cfg.mechanics.marigoldToranEnabled}
+          rosesEnabled={cfg.mechanics.cornerParallaxRoses}
+          primary={tpl.primary}
+          gold={tpl.gold}
+        />
+        {MusicPill}
+        <EditorialLayout {...sharedLayoutProps} />
+        {YtModal}
+      </div>
+    );
+  }
+
+  if (layoutStyle === "cinematic") {
+    return (
+      <div className="relative">
+        {MusicPill}
+        <CinematicLayout {...sharedLayoutProps} />
+        {YtModal}
+      </div>
+    );
+  }
+
+  if (layoutStyle === "dark-cosmos") {
+    return (
+      <div className="relative">
+        {MusicPill}
+        <DarkCosmosLayout {...sharedLayoutProps} />
+        {YtModal}
+      </div>
+    );
+  }
+
+  if (layoutStyle === "minimal-zen") {
+    return (
+      <div className="relative">
+        {MusicPill}
+        <MinimalZenLayout {...sharedLayoutProps} />
+        {YtModal}
+      </div>
+    );
+  }
+
+  // ── HERITAGE LAYOUT (default — original arch card) ───────────────────────────
   return (
     <div
       className="@container relative overflow-x-clip"
-      style={{ background: template.bg, color: template.ink }}
+      style={{ background: tpl.bg, color: tpl.ink }}
     >
       {/* Swinging Marigold Toran & Corner Roses */}
       <ToranAndRoses
         toranEnabled={cfg.mechanics.marigoldToranEnabled}
         rosesEnabled={cfg.mechanics.cornerParallaxRoses}
-        primary={template.primary}
-        gold={template.gold}
+        primary={tpl.primary}
+        gold={tpl.gold}
       />
 
-      {/* Floating Music / Our Song pill — stays docked cleanly without overlapping Toran/RSVP */}
-      <button
-        type="button"
-        onClick={toggleMusic}
-        aria-label={
-          ytId
-            ? "Open Our Song on YouTube"
-            : muted
-            ? "Play soundtrack"
-            : "Mute soundtrack"
-        }
-        className={`${
-          embedded
-            ? "absolute right-3 bottom-3 @2xl:bottom-auto @2xl:top-3 z-40"
-            : "fixed bottom-4 right-4 z-50"
-        } inline-flex items-center gap-2 rounded-full bg-[#161412] px-4 py-2 font-ui text-xs font-semibold text-white shadow-xl transition-colors hover:bg-[#6E1F2F]`}
-      >
-        {ytId ? (
-          <>
-            <PlayCircle size={15} className="text-[#F6E27A]" /> Our Song ♪
-          </>
-        ) : muted ? (
-          <>
-            <VolumeX size={14} /> Sound Off
-          </>
-        ) : (
-          <>
-            <Music size={14} className="animate-pulse text-[#F6E27A]" /> Our Song ♪
-          </>
-        )}
-      </button>
+      {MusicPill}
 
-      {/* ENTRY GATE — clears marigold toran on top; expands across @2xl desktop containers */}
+      {/* ENTRY GATE */}
       <section
         id="invite-sec-gate"
         className={`relative min-h-[min(580px,82dvh)] @2xl:min-h-[640px] overflow-hidden ${
           cfg.mechanics.marigoldToranEnabled ? "pt-12 @2xl:pt-14" : ""
         }`}
       >
-        {entryType === "boarding-pass" ? (
-          <div className="flex min-h-[620px] flex-col items-center justify-center bg-[#0F2440] px-4 py-12 text-white">
-            <p className="mb-4 font-ui text-[11px] uppercase tracking-[0.3em] text-[#F6E27A]">
-              Boarding for {guestName}
-            </p>
-            <BoardingPass
-              guestName={guestName}
-              groom={cfg.couple.groomName}
-              bride={cfg.couple.brideName}
-              departureCode={cfg.location.departureCode}
-              departureCity={cfg.location.departureCity}
-              arrivalCode={cfg.location.arrivalCode}
-              arrivalCity={cfg.location.arrivalCity}
-              targetDate={cfg.couple.weddingDate}
-              primary={template.primary}
-              gold={template.gold}
-              onOpen={handleGateOpen}
-            />
-            <p className="mt-5 font-ui text-[11px] uppercase tracking-[0.3em] text-white/60">
-              Scroll to board ↓
-            </p>
-          </div>
-        ) : entryType === "ring-box" ? (
-          <RingBoxGate
-            groom={cfg.couple.groomName}
-            bride={cfg.couple.brideName}
-            monogram={cfg.couple.monogram}
-            guestName={guestName}
-            primary={template.primary}
-            gold={template.gold}
-            tapLabel={cfg.language === "english" ? undefined : copy.tapSeal}
-            onOpen={handleGateOpen}
-          />
-        ) : entryType === "diya-lamp" ? (
-          <DiyaLampGate
-            groom={cfg.couple.groomName}
-            bride={cfg.couple.brideName}
-            guestName={guestName}
-            primary={template.primary}
-            gold={template.gold}
-            tapLabel={cfg.language === "english" ? undefined : copy.tapBook}
-            onOpen={handleGateOpen}
-          />
-        ) : entryType === "biometric-bloom" ? (
-          <BiometricBloomGate
-            groom={cfg.couple.groomName}
-            bride={cfg.couple.brideName}
-            monogram={cfg.couple.monogram}
-            guestName={guestName}
-            primary={template.primary}
-            gold={template.gold}
-            onOpen={handleGateOpen}
-          />
-        ) : entryType === "constellation-trace" ? (
-          <ConstellationGate
-            groom={cfg.couple.groomName}
-            bride={cfg.couple.brideName}
-            guestName={guestName}
-            primary={template.primary}
-            gold={template.gold}
-            onOpen={handleGateOpen}
-          />
-        ) : entryType === "tear-perforation" ? (
-          <TearPerforationGate
-            groom={cfg.couple.groomName}
-            bride={cfg.couple.brideName}
-            guestName={guestName}
-            primary={template.primary}
-            gold={template.gold}
-            onOpen={handleGateOpen}
-          />
-        ) : entryType === "frost-wipe" ? (
-          <FrostWipeGate
-            groom={cfg.couple.groomName}
-            bride={cfg.couple.brideName}
-            guestName={guestName}
-            primary={template.primary}
-            gold={template.gold}
-            onOpen={handleGateOpen}
-          />
-        ) : entryType === "mandala-dial" ? (
-          <MandalaDialGate
-            groom={cfg.couple.groomName}
-            bride={cfg.couple.brideName}
-            monogram={cfg.couple.monogram}
-            guestName={guestName}
-            primary={template.primary}
-            gold={template.gold}
-            onOpen={handleGateOpen}
-          />
-        ) : entryType === "velvet-book" ? (
-          <BookGate
-            groom={cfg.couple.groomName}
-            bride={cfg.couple.brideName}
-            groomParents={cfg.couple.groomParents}
-            brideParents={cfg.couple.brideParents}
-            guestName={guestName}
-            sacredQuote={cfg.blessing.sacredQuote}
-            inviteIntro={cfg.blessing.inviteIntroLine}
-            symbol={cfg.blessing.enabled ? cfg.blessing.symbol : "none"}
-            primary={template.primary}
-            gold={template.gold}
-            heroPhotoUrl={cfg.couple.heroPhotoUrl}
-            kenBurnsEnabled={cfg.couple.kenBurnsEnabled}
-            tapLabel={copy.tapBook}
-            onOpen={handleGateOpen}
-          />
-        ) : (
-          <EnvelopeGate
-            variant={entryType}
-            groom={cfg.couple.groomName}
-            bride={cfg.couple.brideName}
-            monogram={cfg.couple.monogram}
-            venueTitle={cfg.location.venueTitle}
-            city={cfg.location.city}
-            guestName={guestName}
-            primary={template.primary}
-            gold={template.gold}
-            tapLabel={copy.tapSeal}
-            onOpen={handleGateOpen}
-          />
-        )}
+        {GateNode}
       </section>
 
       {/* COUPLE HERO — Mobile centered vertical editorial; Desktop expansive wide monogram crest + couple spread */}
@@ -292,11 +490,11 @@ function InviteRendererComponent({
           {cfg.blessing.enabled && cfg.blessing.symbol !== "none" && (
             <div
               className="mx-auto grid h-14 w-14 @2xl:h-16 @2xl:w-16 place-items-center rounded-full border-2 bg-white shadow"
-              style={{ borderColor: template.gold }}
+              style={{ borderColor: tpl.gold }}
             >
               <CulturalEmblem
                 symbol={cfg.blessing.symbol}
-                color={template.primary}
+                color={tpl.primary}
                 size={30}
               />
             </div>
@@ -309,7 +507,7 @@ function InviteRendererComponent({
             <div className="@2xl:text-right">
               <h1
                 className="font-display break-words text-4xl sm:text-5xl @2xl:text-6xl font-bold leading-[1.04]"
-                style={{ color: template.primary }}
+                style={{ color: tpl.primary }}
               >
                 {cfg.couple.groomName}
               </h1>
@@ -318,14 +516,14 @@ function InviteRendererComponent({
               </p>
             </div>
 
-            <p className="font-script my-1.5 @2xl:my-0 text-5xl @2xl:text-6xl" style={{ color: template.gold }}>
+            <p className="font-script my-1.5 @2xl:my-0 text-5xl @2xl:text-6xl" style={{ color: tpl.gold }}>
               &amp;
             </p>
 
             <div className="@2xl:text-left">
               <h1
                 className="font-display break-words text-4xl sm:text-5xl @2xl:text-6xl font-bold leading-[1.04]"
-                style={{ color: template.primary }}
+                style={{ color: tpl.primary }}
               >
                 {cfg.couple.brideName}
               </h1>
@@ -345,64 +543,9 @@ function InviteRendererComponent({
       <section
         id="invite-sec-date"
         className="relative px-2 py-14"
-        style={{ background: `${template.primary}0D` }}
+        style={{ background: `${tpl.primary}0D` }}
       >
-        {revealType === "pull-tassel-scroll" && (
-          <TasselScroll
-            dateLabel={cfg.couple.dateDisplayLabel}
-            muhurat={cfg.couple.muhuratTime}
-            target={cfg.couple.weddingDate}
-            title={`${cfg.couple.groomName} weds ${cfg.couple.brideName}`}
-            venue={cfg.location.venueTitle}
-            symbol={cfg.blessing.enabled ? cfg.blessing.symbol : "none"}
-            primary={template.primary}
-            gold={template.gold}
-            label={copy.saveTheDate}
-          />
-        )}
-        {(revealType === "scratch-3-circles" ||
-          revealType === "scratch-heart") && (
-          <ScratchCard
-            variant={revealType === "scratch-heart" ? "heart" : "3-circles"}
-            day={dayStr}
-            month={monthStr}
-            year={yearStr}
-            venue={`${cfg.location.venueTitle} · ${cfg.couple.muhuratTime}`}
-            target={cfg.couple.weddingDate}
-            title={`${cfg.couple.groomName} weds ${cfg.couple.brideName}`}
-            foil={template.id === "timeless-grace" ? "silver" : "gold"}
-            primary={template.primary}
-          />
-        )}
-        {revealType === "brush-petals" && (
-          <BrushPetalsReveal
-            dateLabel={cfg.couple.dateDisplayLabel}
-            muhurat={cfg.couple.muhuratTime}
-            venue={cfg.location.venueTitle}
-            target={cfg.couple.weddingDate}
-            title={`${cfg.couple.groomName} weds ${cfg.couple.brideName}`}
-            primary={template.primary}
-            gold={template.gold}
-            petalColor={
-              cfg.mechanics.particleType === "marigold-petals"
-                ? "marigold"
-                : "rose"
-            }
-          />
-        )}
-        {revealType === "polaroid-develop" && (
-          <PolaroidDevelop
-            groom={cfg.couple.groomName}
-            bride={cfg.couple.brideName}
-            dateLabel={cfg.couple.dateDisplayLabel}
-            venue={`${cfg.location.venueTitle} · ${cfg.location.city}`}
-            target={cfg.couple.weddingDate}
-            title={`${cfg.couple.groomName} weds ${cfg.couple.brideName}`}
-            primary={template.primary}
-            gold={template.gold}
-            imageUrl={cfg.couple.heroPhotoUrl || undefined}
-          />
-        )}
+        {DateRevealNode}
       </section>
 
       {/* FUNCTIONS 3D CAROUSEL */}
@@ -414,36 +557,31 @@ function InviteRendererComponent({
       {cfg.storyCarousel.length > 0 && (
         <section
           className="py-14"
-          style={{ background: `${template.primary}08` }}
+          style={{ background: `${tpl.primary}08` }}
         >
           <StoryCarousel
             slides={cfg.storyCarousel}
             heading={copy.story}
-            primary={template.primary}
-            gold={template.gold}
+            primary={tpl.primary}
+            gold={tpl.gold}
           />
         </section>
       )}
 
-      {/* GRAND RECEPTION + DRESS CODE / ETIQUETTE — Stacked on mobile; 2-column desktop showcase */}
+      {/* GRAND RECEPTION + DRESS CODE / ETIQUETTE */}
       <div className="mx-auto max-w-md px-4 py-8 @2xl:grid @2xl:max-w-5xl @2xl:grid-cols-2 @2xl:items-stretch @2xl:gap-8 @2xl:px-10 @2xl:py-14">
-        {/* GRAND RECEPTION FEATURE CARD */}
         <section className="flex">
           <div
             className="relative flex w-full flex-col items-center justify-center overflow-hidden rounded-3xl p-7 text-center text-white shadow-xl"
             style={{
-              background: `linear-gradient(155deg, ${template.primary}, #161412)`,
-              border: `1px solid ${template.gold}66`,
+              background: `linear-gradient(155deg, ${tpl.primary}, #161412)`,
+              border: `1px solid ${tpl.gold}66`,
             }}
           >
-            <Sparkles
-              size={22}
-              className="mx-auto"
-              style={{ color: template.gold }}
-            />
+            <Sparkles size={22} className="mx-auto" style={{ color: tpl.gold }} />
             <p
               className="font-ui mt-2 text-[10px] font-bold uppercase tracking-[0.28em]"
-              style={{ color: template.gold }}
+              style={{ color: tpl.gold }}
             >
               Finale Celebration
             </p>
@@ -461,17 +599,12 @@ function InviteRendererComponent({
           </div>
         </section>
 
-        {/* DRESS CODE + ETIQUETTE */}
         <section className="mt-6 flex @2xl:mt-0">
           <div
             className="w-full rounded-3xl border p-6 text-center shadow-sm"
-            style={{ borderColor: `${template.gold}55`, background: "#FFFFFF" }}
+            style={{ borderColor: `${tpl.gold}55`, background: "#FFFFFF" }}
           >
-            <Shirt
-              size={22}
-              className="mx-auto"
-              style={{ color: template.primary }}
-            />
+            <Shirt size={22} className="mx-auto" style={{ color: tpl.primary }} />
             <h3 className="font-display mt-2 text-2xl font-bold text-[#161412]">
               {copy.dressCode}
             </h3>
@@ -479,7 +612,7 @@ function InviteRendererComponent({
               <div className="rounded-2xl bg-[#FAF7F2] p-3.5 text-[#161412]">
                 <p
                   className="font-ui text-[10px] font-bold uppercase tracking-[0.18em]"
-                  style={{ color: template.primary }}
+                  style={{ color: tpl.primary }}
                 >
                   Ladies
                 </p>
@@ -490,7 +623,7 @@ function InviteRendererComponent({
               <div className="rounded-2xl bg-[#FAF7F2] p-3.5 text-[#161412]">
                 <p
                   className="font-ui text-[10px] font-bold uppercase tracking-[0.18em]"
-                  style={{ color: template.primary }}
+                  style={{ color: tpl.primary }}
                 >
                   Gentlemen
                 </p>
@@ -505,20 +638,15 @@ function InviteRendererComponent({
               </p>
             )}
             <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[#FAF7F2] p-3.5 text-left text-[13px] text-[#161412]">
-              <Gift
-                size={16}
-                className="mt-0.5 shrink-0"
-                style={{ color: template.primary }}
-              />
+              <Gift size={16} className="mt-0.5 shrink-0" style={{ color: tpl.primary }} />
               <p>
-                <strong>Gift note:</strong>{" "}
-                {cfg.etiquetteAndDetails.giftPreferenceNote}
+                <strong>Gift note:</strong> {cfg.etiquetteAndDetails.giftPreferenceNote}
               </p>
             </div>
             <a
               href={`tel:${cfg.etiquetteAndDetails.organizerPhone}`}
               className="font-ui mt-3 inline-flex flex-wrap items-center justify-center gap-1.5 text-xs font-semibold underline"
-              style={{ color: template.primary }}
+              style={{ color: tpl.primary }}
             >
               <Phone size={13} /> Wedding organizer:{" "}
               {cfg.etiquetteAndDetails.organizerName} ·{" "}
@@ -528,10 +656,10 @@ function InviteRendererComponent({
         </section>
       </div>
 
-      {/* VENUE ROUTE + RSVP LOUNGE — 2-column desktop grid, clean vertical stack on mobile */}
+      {/* VENUE ROUTE + RSVP LOUNGE */}
       <div
         className="px-4 py-12 @2xl:px-10 @2xl:py-16"
-        style={{ background: `${template.primary}0D` }}
+        style={{ background: `${tpl.primary}0D` }}
       >
         <div className="mx-auto grid max-w-md grid-cols-1 gap-8 @2xl:max-w-5xl @2xl:grid-cols-[0.95fr_1.05fr] @2xl:items-start">
           <section id="invite-sec-map">
@@ -540,8 +668,8 @@ function InviteRendererComponent({
               fullAddress={cfg.location.fullAddress}
               city={cfg.location.city}
               googleMapsUrl={cfg.location.googleMapsUrl}
-              primary={template.primary}
-              gold={template.gold}
+              primary={tpl.primary}
+              gold={tpl.gold}
               heading={copy.venue}
             />
           </section>
@@ -561,29 +689,25 @@ function InviteRendererComponent({
               congratulationsPrompt={cfg.etiquetteAndDetails.congratulationsPrompt}
               heading={copy.rsvpHeading}
               subHeading={copy.rsvpSub}
-              primary={template.primary}
+              primary={tpl.primary}
             />
           </section>
         </div>
       </div>
 
-      {/* CLOSING (extra bottom padding clears floating music pill cleanly on mobile) */}
+      {/* CLOSING */}
       <section
         className="px-6 pt-16 pb-24 @2xl:pb-16 text-center text-white"
         style={{
-          background: `linear-gradient(170deg, ${template.primary}, #161412)`,
+          background: `linear-gradient(170deg, ${tpl.primary}, #161412)`,
         }}
       >
         {cfg.blessing.enabled && cfg.blessing.symbol !== "none" ? (
           <div className="mb-3 flex justify-center">
-            <CulturalEmblem
-              symbol={cfg.blessing.symbol}
-              color={template.gold}
-              size={34}
-            />
+            <CulturalEmblem symbol={cfg.blessing.symbol} color={tpl.gold} size={34} />
           </div>
         ) : (
-          <p className="font-display text-xl" style={{ color: template.gold }}>
+          <p className="font-display text-xl" style={{ color: tpl.gold }}>
             ✦
           </p>
         )}
@@ -599,25 +723,7 @@ function InviteRendererComponent({
         </p>
       </section>
 
-      {/* YouTube Song Modal */}
-      {ytId && (
-        <AccessibleDialog
-          open={ytOpen}
-          onClose={() => setYtOpen(false)}
-          title="Our Wedding Song"
-          subtitle={`${cfg.couple.groomName} & ${cfg.couple.brideName}`}
-        >
-          <div className="aspect-video overflow-hidden rounded-2xl bg-black">
-            <iframe
-              title="Couple's wedding song on YouTube"
-              src={`https://www.youtube-nocookie.com/embed/${ytId}`}
-              className="h-full w-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        </AccessibleDialog>
-      )}
+      {YtModal}
     </div>
   );
 }
