@@ -358,6 +358,8 @@ function StudioInner() {
                       {(
                         [
                           ["velvet-book", "3D Velvet Book"],
+                          ["ring-box", "Ring Box"],
+                          ["diya-lamp", "Diya Lamp"],
                           ["wax-envelope", "Wax Envelope"],
                           ["palace-doors", "Palace Doors"],
                           ["boarding-pass", "Boarding Pass"],

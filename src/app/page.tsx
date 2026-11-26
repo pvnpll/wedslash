@@ -49,7 +49,7 @@ export default function Home() {
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 pb-16 pt-12 lg:grid-cols-2 lg:pt-16">
           <div>
             <p className="font-ui inline-flex items-center gap-2 rounded-full border hairline bg-white px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6E1F2F]">
-              <Sparkles size={13} /> 16 couture templates · Zero code
+              <Sparkles size={13} /> 18 couture templates · Zero code
             </p>
             <h1 className="font-display mt-5 text-5xl font-bold leading-[1.04] tracking-tight sm:text-6xl lg:text-[4.4rem]">
               Invitations your guests{" "}
@@ -72,7 +72,7 @@ export default function Home() {
                 href="/templates"
                 className="font-ui inline-flex items-center gap-2 rounded-full border border-[#161412]/20 bg-white px-7 py-3.5 text-sm font-bold uppercase tracking-[0.1em] transition hover:border-[#161412]"
               >
-                <BookOpen size={16} /> Browse 16 templates
+                <BookOpen size={16} /> Browse 18 templates
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3">
@@ -298,7 +298,7 @@ export default function Home() {
               The collection
             </p>
             <h2 className="font-display mt-2 text-4xl font-bold sm:text-5xl">
-              Sixteen templates. Zero boring ones.
+              Eighteen worlds. Zero boring ones.
             </h2>
           </div>
           <Link
@@ -331,7 +331,7 @@ export default function Home() {
               {
                 n: "01",
                 t: "Pick & personalize",
-                d: "Choose from 16 templates, then edit names, parents, functions, dress codes, story slides and music in the 7-tab studio — every keystroke previews live.",
+                d: "Choose from 18 templates, then edit names, parents, functions, dress codes, story slides and music in the 7-tab studio — every keystroke previews live.",
               },
               {
                 n: "02",

@@ -22,9 +22,11 @@ export default function TemplatesPage() {
     const matchMech =
       mech === "All" ||
       (mech === "Velvet Book" && combinedMech.includes("book")) ||
+      (mech === "Ring Box" && combinedMech.includes("ring")) ||
+      (mech === "Diya Lamp" && (combinedMech.includes("diya") || combinedMech.includes("lamp"))) ||
       (mech === "Tassel Scroll" && combinedMech.includes("tassel")) ||
       (mech === "Scratch Foil" && combinedMech.includes("scratch")) ||
-      (mech === "Brush Petals" && combinedMech.includes("petal")) ||
+      (mech === "Brush Petals" && (combinedMech.includes("petal") || combinedMech.includes("marigold"))) ||
       (mech === "Polaroid" && combinedMech.includes("polaroid")) ||
       (mech === "Boarding Pass" && combinedMech.includes("boarding"));
     const matchSearch = (t.name + t.tagline + t.style + t.entry + t.reveal)
@@ -43,7 +45,7 @@ export default function TemplatesPage() {
           Pick the one that feels like you.
         </h1>
         <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[#6E655F]">
-          Every template is fully interactive — click Quick View to test its 3D cover, tassel scroll, scratch foil, or petals right here, or hit Customize to open it in the Studio.
+          Every template is its own world — a ring box that springs open, a brass diya you light, palace doors, boarding passes, tassel scrolls, scratch foil and brushable petals. No two share the same opening, reveal or soundtrack. Click Quick View to test it live, or hit Customize to open it in the Studio.
         </p>
       </motion.div>
 

@@ -17,6 +17,30 @@ export const SYNTH_TRACKS: SynthTrack[] = [
     tempoMs: 900,
   },
   {
+    id: "nadaswaram-muhurtham",
+    label: "Nadaswaram Morning Raga",
+    mood: "Tamil Muhurtham · Bright & Auspicious",
+    notes: [293.66, 329.63, 369.99, 440.0, 493.88, 440.0, 369.99, 329.63],
+    wave: "sawtooth",
+    tempoMs: 640,
+  },
+  {
+    id: "dhol-sangeet",
+    label: "Dhol & Sangeet Nights",
+    mood: "Punjabi Celebration · Festive Pulse",
+    notes: [329.63, 329.63, 392.0, 440.0, 523.25, 440.0, 392.0, 329.63],
+    wave: "square",
+    tempoMs: 520,
+  },
+  {
+    id: "temple-bells",
+    label: "Temple Bells & Drone",
+    mood: "Sacred · Slow Bell Resonance",
+    notes: [523.25, 392.0, 329.63, 261.63, 329.63, 392.0, 440.0, 523.25],
+    wave: "sine",
+    tempoMs: 1200,
+  },
+  {
     id: "oud-garden",
     label: "Sacred Oud & Fountain",
     mood: "Botanical Nikaah · Serene",
@@ -40,7 +64,67 @@ export const SYNTH_TRACKS: SynthTrack[] = [
     wave: "triangle",
     tempoMs: 950,
   },
+  {
+    id: "deco-swing",
+    label: "Art-Deco Swing Quartet",
+    mood: "Engagement Soirée · Bold & Brassy",
+    notes: [261.63, 311.13, 392.0, 466.16, 523.25, 466.16, 392.0, 311.13],
+    wave: "square",
+    tempoMs: 600,
+  },
+  {
+    id: "ring-box-music",
+    label: "Music-Box Proposal Waltz",
+    mood: "Engagement · Delicate Music Box",
+    notes: [523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 523.25, 440.0],
+    wave: "sine",
+    tempoMs: 700,
+  },
+  {
+    id: "starry-celesta",
+    label: "Starlight Celesta",
+    mood: "Night Sky · Twinkling Lullaby",
+    notes: [659.25, 523.25, 587.33, 783.99, 880.0, 783.99, 587.33, 523.25],
+    wave: "sine",
+    tempoMs: 820,
+  },
+  {
+    id: "petal-kalimba",
+    label: "Rosewater Kalimba",
+    mood: "Garden Romance · Soft Plucks",
+    notes: [392.0, 440.0, 523.25, 587.33, 523.25, 440.0, 392.0, 329.63],
+    wave: "triangle",
+    tempoMs: 740,
+  },
+  {
+    id: "curtain-strings",
+    label: "Curtain-Rise Strings",
+    mood: "Theatrical · Slow Swell",
+    notes: [196.0, 261.63, 329.63, 392.0, 493.88, 392.0, 329.63, 261.63],
+    wave: "triangle",
+    tempoMs: 1100,
+  },
+  {
+    id: "passport-chime",
+    label: "Departure Lounge Chimes",
+    mood: "Travel · Airy Boarding Call",
+    notes: [440.0, 523.25, 659.25, 523.25, 440.0, 392.0, 440.0, 523.25],
+    wave: "sine",
+    tempoMs: 860,
+  },
+  {
+    id: "oud-lounge",
+    label: "Marrakech Lounge Oud",
+    mood: "Moorish Dusk · Warm Groove",
+    notes: [246.94, 293.66, 329.63, 392.0, 329.63, 293.66, 246.94, 220.0],
+    wave: "triangle",
+    tempoMs: 690,
+  },
 ];
+
+export function getTrackLabel(trackId: string): string {
+  return SYNTH_TRACKS.find((t) => t.id === trackId)?.label ?? "Wedding Overture";
+}
 
 export function parseYoutubeId(url: string): string | null {
   if (!url) return null;

@@ -1,7 +1,7 @@
 "use client";
 import { memo } from "react";
 import Link from "next/link";
-import { Star, ArrowUpRight, Zap, Plane, Camera, Sparkles } from "lucide-react";
+import { Star, ArrowUpRight, Zap, Plane, Camera, Sparkles, Gem, Flame } from "lucide-react";
 import type { Template } from "@/lib/types";
 import { getPresetConfig } from "@/lib/templates";
 
@@ -214,6 +214,45 @@ function ThumbnailVisual({ t }: { t: Template }) {
           <p className="font-ui mt-2 inline-block rounded-full border border-white/20 px-3 py-0.5 text-[9px] uppercase tracking-widest">
             {dStr} · {mStr} · {yStr}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (t.previewType === "ring") {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-4" style={{ background: `linear-gradient(180deg, #FAF3E3, #F0DFC0)` }}>
+        <div className="relative flex flex-col items-center transition-transform duration-300 group-hover:scale-105">
+          <div className="grid h-16 w-16 place-items-center rounded-full" style={{ background: `radial-gradient(circle, ${t.gold}66 0%, transparent 70%)` }}>
+            <Gem size={30} style={{ color: t.gold }} />
+          </div>
+          <div
+            className="mt-1 h-9 w-44 rounded-t-xl border"
+            style={{ background: `linear-gradient(180deg, ${t.primary}, #241D1D)`, borderColor: `${t.gold}66` }}
+          />
+          <div
+            className="-mt-0.5 w-48 rounded-b-xl px-3 pb-3 pt-2 text-center shadow-xl"
+            style={{ background: t.primary }}
+          >
+            <p className="font-display text-base font-bold text-white">{g} &amp; {b}</p>
+            <p className="font-ui text-[8px] uppercase tracking-[0.2em] text-white/70">{dStr} · {mStr} · {yStr}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (t.previewType === "diya") {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-4" style={{ background: "linear-gradient(180deg, #2A0E04, #431407)" }}>
+        <div className="flex flex-col items-center transition-transform duration-300 group-hover:scale-105">
+          <div className="grid h-14 w-14 place-items-center rounded-full" style={{ background: "radial-gradient(circle, rgba(255,200,90,0.5) 0%, transparent 70%)" }}>
+            <Flame size={30} className="text-[#FFC94D]" fill="#FF9D2E" />
+          </div>
+          <div className="mt-1 grid h-12 w-44 place-items-center rounded-b-full border-t-4" style={{ background: "linear-gradient(180deg, #7C2D12, #431407)", borderColor: t.gold }}>
+            <p className="font-display text-sm font-bold text-[#FFF3D6]">{g} &amp; {b}</p>
+          </div>
+          <p className="font-ui mt-2 text-[8px] uppercase tracking-[0.2em] text-[#FFC94D]">{dStr} · {mStr} · {yStr}</p>
         </div>
       </div>
     );

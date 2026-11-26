@@ -29,7 +29,7 @@ const TIERS = [
     sub: "€75 · one-time",
     time: "Ready in 4–7 days · Express 1–2 days",
     features: [
-      "Any of 16 couture templates, made yours",
+      "Any of 18 couture templates, made yours",
       "3D book / tassel / scratch / boarding pass",
       "Multi-event itinerary + dress codes + maps",
       "Live RSVP dashboard + WhatsApp sync",
@@ -62,7 +62,7 @@ const TIERS = [
 const FAQS = [
   {
     q: "Is there really a Free Self-Serve Studio + Netlify ZIP export?",
-    a: "Yes! You can customize all 16 templates in the Studio, preview live on mobile & desktop, publish to a link, and download a self-contained wedding-invite.zip (index.html) to host free on Netlify Drop or Vercel forever.",
+    a: "Yes! You can customize all 18 templates in the Studio, preview live on mobile & desktop, publish to a link, and download a self-contained wedding-invite.zip (index.html) to host free on Netlify Drop or Vercel forever.",
   },
   {
     q: "Do guests have to download an app or create an account?",

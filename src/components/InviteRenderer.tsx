@@ -4,6 +4,8 @@ import { Music, VolumeX, Gift, Phone, Shirt, Sparkles, PlayCircle } from "lucide
 import ParticleCanvas from "./ParticleCanvas";
 import BookGate from "./mechanics/BookGate";
 import EnvelopeGate from "./mechanics/EnvelopeGate";
+import RingBoxGate from "./mechanics/RingBoxGate";
+import DiyaLampGate from "./mechanics/DiyaLampGate";
 import TasselScroll from "./mechanics/TasselScroll";
 import ScratchCard from "./mechanics/ScratchCard";
 import BrushPetalsReveal from "./mechanics/BrushPetalsReveal";
@@ -169,6 +171,27 @@ function InviteRendererComponent({
               Scroll to board ↓
             </p>
           </div>
+        ) : entryType === "ring-box" ? (
+          <RingBoxGate
+            groom={cfg.couple.groomName}
+            bride={cfg.couple.brideName}
+            monogram={cfg.couple.monogram}
+            guestName={guestName}
+            primary={template.primary}
+            gold={template.gold}
+            tapLabel={cfg.language === "english" ? undefined : copy.tapSeal}
+            onOpen={handleGateOpen}
+          />
+        ) : entryType === "diya-lamp" ? (
+          <DiyaLampGate
+            groom={cfg.couple.groomName}
+            bride={cfg.couple.brideName}
+            guestName={guestName}
+            primary={template.primary}
+            gold={template.gold}
+            tapLabel={cfg.language === "english" ? undefined : copy.tapBook}
+            onOpen={handleGateOpen}
+          />
         ) : entryType === "velvet-book" ? (
           <BookGate
             groom={cfg.couple.groomName}

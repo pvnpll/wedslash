@@ -1,7 +1,8 @@
 export type InviteCategory =
   | "Indian Multi-Event"
   | "Western & Destination"
-  | "Save the Date & Milestones";
+  | "Save the Date & Milestones"
+  | "Engagement";
 
 export type InviteLanguage =
   | "english"
@@ -27,7 +28,9 @@ export type EntryType =
   | "wax-envelope"
   | "palace-doors"
   | "boarding-pass"
-  | "curtain-reveal";
+  | "curtain-reveal"
+  | "ring-box"
+  | "diya-lamp";
 
 export type DateRevealType =
   | "pull-tassel-scroll"
@@ -190,7 +193,7 @@ export interface Template {
   particle: string;
   rating: number;
   uses: string;
-  previewType: "book" | "envelope" | "boarding" | "scratch" | "petals" | "polaroid" | "arch" | "vip";
+  previewType: "book" | "envelope" | "boarding" | "scratch" | "petals" | "polaroid" | "arch" | "vip" | "ring" | "diya";
 }
 
 export interface GuestRsvp {
